@@ -70,6 +70,38 @@ class Puente(unittest.TestCase):
             m.assert_called_once()
             self.assertLessEqual(d['reservas'][0]['total'],d['reservas'][1]['total'])
 
+    def test_historial_recorre_en_python_y_conserva_sentido(self):
+        self.demo()
+        lista = self.api._hotel.historial
+        with patch.object(lista,'listar',wraps=lista.listar) as recorrido:
+            antiguos = self.api.estado('entrada',False)['historial']
+            recorrido.assert_called_once_with(False)
+        with patch.object(lista,'listar',wraps=lista.listar) as recorrido:
+            recientes = self.api.estado('entrada',True)['historial']
+            recorrido.assert_called_once_with(True)
+        self.assertEqual(antiguos,list(reversed(recientes)))
+        self.api.estado('entrada',False)
+        resultado = self.api.operar('huesped',{'dni':'30000000','nombre':'Nuevo'},self.api._revision)
+        self.assertTrue(resultado['ok'])
+        self.assertEqual(resultado['datos']['historial'][-1]['accion'],'Huésped registrado · 30000000')
+
+    def test_huespedes_se_listan_con_inorden_del_arbol(self):
+        for dni in ['40000000','20000000','60000000']:
+            self.assertTrue(self.ejecutar('huesped',{'dni':dni,'nombre':'Prueba'})['ok'])
+        arbol = self.api._hotel.indice
+        with patch.object(arbol,'listar',wraps=arbol.listar) as recorrido:
+            datos = self.api.estado()
+            recorrido.assert_called_once_with()
+        self.assertEqual([h['dni'] for h in datos['huespedes']],['20000000','40000000','60000000'])
+
+    def test_orden_invalido_no_cambia_preferencia(self):
+        self.api.estado('total',False)
+        for orden,inverso in [('otro',True),('entrada',1),('entrada','false')]:
+            with self.assertRaises(ValueError):
+                self.api.estado(orden,inverso)
+        self.assertEqual(self.api._orden,'total')
+        self.assertIs(self.api._inverso,False)
+
     def test_reportes(self):
         self.demo()
         r=self.api.estado()['reservas'][0]

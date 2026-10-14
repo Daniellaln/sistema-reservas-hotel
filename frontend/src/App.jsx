@@ -152,7 +152,7 @@ function App() {
       if (pending.current || polling.current) return;
       polling.current = true;
       try {
-        const result = await bridge("estado", order);
+        const result = await bridge("estado", order, reverse);
         if (cancelled || pending.current || result.revision < dataRef.current.revision) return;
         const finished = dataRef.current.habitaciones.filter(h => h.trabajo && result.habitaciones.some(next => next.numero === h.numero && !next.trabajo));
         setData(result);
@@ -164,7 +164,7 @@ function App() {
       }
     }, 500);
     return () => { cancelled = true; clearInterval(timer); };
-  }, [Boolean(data?.habitaciones.some(h=>h.trabajo)),order]);
+  }, [Boolean(data?.habitaciones.some(h=>h.trabajo)),order,reverse]);
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReducedMotion(preference.matches);
@@ -198,7 +198,7 @@ function App() {
   useEffect(() => { setMoreOpen(false); }, [view, panel?.type]);
   async function refresh() {
     try {
-      const result = await bridge("estado", order);
+      const result = await bridge("estado", order, reverse);
       setData(current => !current || result.revision >= current.revision ? result : current);
       setBootError("");
     } catch (e) {
@@ -207,7 +207,7 @@ function App() {
   }
   useEffect(() => {
     refresh();
-  }, [order]);
+  }, [order, reverse]);
   useEffect(() => {
     if (panel) {
       panelRef.current?.querySelector('input:not([type="hidden"]),select,button')?.focus();
@@ -965,7 +965,7 @@ function App() {
             {data.historial.length ? (
               rows(
                 ["Momento", "Operación"],
-                (reverse ? data.historial : [...data.historial].reverse()).map(
+                data.historial.map(
                   (h, i) => (
                     <tr key={i}>
                       <td>{new Date(h.fecha).toLocaleString("es-PE")}</td>

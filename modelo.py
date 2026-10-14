@@ -224,7 +224,12 @@ class Hotel:
         exigir(self.indice.buscar(dni), 'Selecciona un huésped.')
         self.rango(entrada, salida)
         exigir(1 <= personas <= 20, 'Cantidad inválida.')
-        exigir(not any((s['dni'] == dni and s['entrada'] == entrada and (s['salida'] == salida) for s in self.cola.listar())), 'La solicitud ya está en espera.')
+        tmp = self.cola.Ini
+        while tmp != None:
+            s = tmp.dato
+            if s['dni'] == dni and s['entrada'] == entrada and s['salida'] == salida:
+                raise ValueError('La solicitud ya está en espera.')
+            tmp = tmp.der
         self.cola.encolar({'dni': dni, 'entrada': entrada, 'salida': salida, 'personas': personas})
         self.datos['espera'] = list(self.cola.listar())
         self.registrar('Solicitud en espera · ' + dni)

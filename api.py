@@ -18,6 +18,7 @@ class API:
         self._lock = RLock()
         self._revision = 0
         self._orden = 'entrada'
+        self._inverso = True
         self._ventana = None
 
     def _estado(self, orden=None):
@@ -26,6 +27,7 @@ class API:
         if orden not in ['entrada','total']:
             raise ValueError('Orden inválido.')
         d = deepcopy(self._hotel.datos)
+        d['huespedes'] = deepcopy(self._hotel.indice.listar())
         reservas = merge_sort(d['reservas'],orden)
         ingresos = 0
         pendiente = 0
@@ -68,14 +70,16 @@ class API:
             s['orden'] = i+1
             s['nombre'] = self._hotel.indice.buscar(s['dni'])['nombre']
         d['reservas'] = reservas
-        d['historial'] = self._hotel.historial.listar(True)
+        d['historial'] = self._hotel.historial.listar(self._inverso)
         d['revision'] = self._revision
         d['hoy'] = self._reloj().isoformat()
         d['resumen'] = {'ingresos':ingresos,'pendiente':pendiente,'abiertas':abiertas,'llegadas':llegadas}
         return d
 
-    def estado(self, orden='entrada'):
+    def estado(self, orden='entrada', inverso=True):
         with self._lock:
+            if orden not in ['entrada','total'] or type(inverso) != bool:
+                raise ValueError('Orden de consulta inválido.')
             antes = deepcopy(self._hotel.datos)
             try:
                 if self._hotel.finalizar_trabajos(self._segundos()):
@@ -84,6 +88,7 @@ class API:
             except (ValueError,TypeError,KeyError,OSError):
                 self._hotel = Hotel(antes,self._reloj)
                 raise
+            self._inverso = inverso
             datos = self._estado(orden)
             self._orden = orden
             return datos

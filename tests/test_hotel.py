@@ -51,6 +51,17 @@ class Reservas(unittest.TestCase):
         self.h.atender('102')
         self.assertEqual(len(self.h.cola.listar()),0)
 
+    def test_espera_duplicada_recorre_nodos_sin_alterar_cola(self):
+        self.h.esperar('12345678','2026-10-13','2026-10-15',1)
+        self.h.esperar('87654321','2026-10-13','2026-10-15',1)
+        inicio = self.h.cola.Ini
+        fin = self.h.cola.Fin
+        with self.assertRaises(ValueError):
+            self.h.esperar('87654321','2026-10-13','2026-10-15',1)
+        self.assertIs(self.h.cola.Ini,inicio)
+        self.assertIs(self.h.cola.Fin,fin)
+        self.assertEqual(len(self.h.cola.listar()),2)
+
     def test_mantenimiento(self):
         self.crear()
         with self.assertRaises(ValueError):self.h.mantenimiento('101')
