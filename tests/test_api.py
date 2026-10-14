@@ -145,3 +145,12 @@ class Puente(unittest.TestCase):
         habitaciones={h['numero']:h for h in self.api.estado()['habitaciones']}
         self.assertEqual(habitaciones['101']['estado'],'Reservada')
         self.assertEqual(habitaciones['102']['estado'],'Disponible')
+
+    def test_reserva_futura_explica_bloqueo_de_mantenimiento(self):
+        self.demo()
+        habitaciones={h['numero']:h for h in self.api.estado()['habitaciones']}
+        self.assertEqual(habitaciones['102']['estado'],'Disponible')
+        self.assertEqual(habitaciones['102']['proxima_reserva'],'2026-10-14')
+        self.assertFalse(habitaciones['102']['puede_mantenimiento'])
+        self.assertTrue(habitaciones['201']['puede_mantenimiento'])
+        self.assertFalse(self.ejecutar('mantenimiento',{'numero':'102'})['ok'])

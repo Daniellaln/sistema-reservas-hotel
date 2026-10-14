@@ -44,6 +44,12 @@ class API:
             r = self._hotel.obtener(p['reserva'])
             p['nombre'] = self._hotel.indice.buscar(r['dni'])['nombre']
         for h in d['habitaciones']:
+            h['puede_mantenimiento'] = h['mantenimiento'] or not self._hotel.tiene_reservas(h['numero'])
+            h['proxima_reserva'] = None
+            for r in reservas:
+                if r['habitacion'] == h['numero'] and r['estado'] == 'Confirmada' and r['entrada'] > self._reloj().isoformat():
+                    if h['proxima_reserva'] == None or r['entrada'] < h['proxima_reserva']:
+                        h['proxima_reserva'] = r['entrada']
             h['estado'] = 'Disponible'
             if h['mantenimiento']:
                 h['estado'] = 'Mantenimiento'
@@ -60,21 +66,6 @@ class API:
         d['hoy'] = self._reloj().isoformat()
         d['resumen'] = {'ingresos':ingresos,'pendiente':pendiente,'abiertas':abiertas,'llegadas':llegadas}
         return d
-
-    def control(self, accion):
-        if accion == 'cerrar':
-            self._ventana.destroy()
-        elif accion == 'minimizar':
-            self._ventana.minimize()
-        elif accion == 'ampliar':
-            if getattr(self, '_ampliada', True):
-                self._ventana.restore()
-                self._ampliada = False
-            else:
-                self._ventana.maximize()
-                self._ampliada = True
-        else:
-            raise ValueError('Control de ventana inválido.')
 
     def estado(self, orden='entrada'):
         with self._lock:

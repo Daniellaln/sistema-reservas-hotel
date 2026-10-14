@@ -37,11 +37,8 @@ def main():
         interfaz = base / 'frontend' / 'build-ui' / 'index.html'
         if not interfaz.exists():
             raise ValueError('Falta construir la interfaz. Ejecuta PREPARAR.bat primero.')
-        ventana = webview.create_window('Sistema de Gestión de Reservas de Hotel',str(interfaz),js_api=api,width=1200,height=760,x=0,y=0,min_size=(900,560),maximized=True,frameless=True,easy_drag=False,shadow=True,background_color='#F6F7FA')
+        ventana = webview.create_window('Sistema de Gestión de Reservas de Hotel',str(interfaz),js_api=api,width=1200,height=760,min_size=(900,560),maximized=True,background_color='#F6F7FA')
         api._ventana = ventana
-        api._ampliada = True
-        ventana.events.maximized += lambda: setattr(api,'_ampliada',True)
-        ventana.events.restored += lambda: setattr(api,'_ampliada',False)
         webview.start(gui='edgechromium',debug=False)
     except Exception as error:
         import tkinter as tk

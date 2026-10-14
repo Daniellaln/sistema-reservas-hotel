@@ -45,3 +45,16 @@ La revisión visual previa pendiente por expiración del permiso ya se realizó.
 - [x] Formulario de 500 px, campos de 17 px, total y confirmar visibles en una ventana de 1200 × 760.
 
 42 pruebas Python aprobadas y construcción React exitosa. Capturas de pantalla reales con datos ficticios. No se ha realizado una medición de tiempos con recepcionistas ni una prueba de carga representativa.
+
+## Revisión de menú, material y ventana — entrega 10
+
+- [x] Más se cierra al hacer clic fuera; el panel se dibuja fuera del filtro de refracción.
+- [x] Habitaciones muestra Disponible hoy y la fecha de la próxima reserva futura.
+- [x] Mantenimiento se muestra deshabilitado para habitaciones con reservas vigentes.
+- [x] Barra nativa de Windows restaurada; arrastre real comprobado mediante cambio de posición de ventana.
+- [x] Elasticidad del componente restaurada; CSS conserva sus transforms y reflejos direccionales. Movimiento reducido según preferencia del sistema.
+
+43 pruebas Python aprobadas, incluida la explicación de mantenimiento bloqueado por una reserva futura. Construcción React exitosa. No se ha empaquetado un ejecutable.
+
+- [x] Escape cierra Más y devuelve el foco al botón.
+- [x] Modo shader revisado en WebView2: eliminada la banda gris; reflejos y elasticidad permanecen activos.

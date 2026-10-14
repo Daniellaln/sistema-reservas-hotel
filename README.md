@@ -46,4 +46,5 @@ Documentación de las tecnologías: https://pywebview.flowrl.com/guide/interdoma
 
 Nueva reserva permite registrar al huésped y la reserva en un solo formulario. Escribir un DNI existente recupera el nombre; no hay que cambiar entre formularios. Los valores iniciales son entrada hoy, salida mañana y una persona. Revisarlos antes de guardar. Reservar desde Habitaciones preselecciona la habitación, y la cotización comprueba el intervalo solicitado.
 
-Recibir cambia una reserva válida a En estancia directamente. La cabecera incluye controles funcionales para cerrar, minimizar y restaurar/maximizar; arrastrar la zona del nombre Hotel mueve la ventana restaurada. La navegación usa liquid-glass-react y la presentación concentra el vidrio en los controles. Consulta DESIGN.md y TERCEROS.md.
+Recibir cambia una reserva válida a En estancia directamente. La barra nativa de Windows permite mover, minimizar, restaurar/maximizar y cerrar. La navegación usa liquid-glass-react y la presentación concentra el vidrio en los controles. Consulta DESIGN.md y TERCEROS.md.
+

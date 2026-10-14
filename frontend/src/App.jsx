@@ -131,13 +131,48 @@ function App() {
     [bootError, setBootError] = useState(""),
     [report, setReport] = useState(null),
     [guestDni, setGuestDni] = useState(""),
-    [guestName, setGuestName] = useState("");
+    [guestName, setGuestName] = useState(""),
+    [moreOpen, setMoreOpen] = useState(false),
+    [reducedMotion, setReducedMotion] = useState(false);
   const formRef = useRef(null),
     panelRef = useRef(null),
     dialogRef = useRef(null),
     seq = useRef(0),
     pending = useRef(false),
-    focusRef = useRef(null);
+    focusRef = useRef(null),
+    navRef = useRef(null),
+    moreRef = useRef(null);
+  useEffect(() => {
+    const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const update = () => setReducedMotion(preference.matches);
+    update();
+    preference.addEventListener("change", update);
+    return () => preference.removeEventListener("change", update);
+  }, []);
+  useEffect(() => {
+    if (!moreOpen) return;
+    function outside(e) {
+      if (!navRef.current?.contains(e.target)) setMoreOpen(false);
+    }
+    function escape(e) {
+      if (e.key === "Escape") {
+        setMoreOpen(false);
+        moreRef.current?.focus();
+      }
+    }
+    function focusOutside(e) {
+      if (!navRef.current?.contains(e.target)) setMoreOpen(false);
+    }
+    document.addEventListener("pointerdown", outside, true);
+    document.addEventListener("keydown", escape);
+    document.addEventListener("focusin", focusOutside);
+    return () => {
+      document.removeEventListener("pointerdown", outside, true);
+      document.removeEventListener("keydown", escape);
+      document.removeEventListener("focusin", focusOutside);
+    };
+  }, [moreOpen]);
+  useEffect(() => { setMoreOpen(false); }, [view, panel?.type]);
   async function refresh() {
     try {
       setData(await bridge("estado", order));
@@ -383,12 +418,7 @@ function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar" inert={panel ? true : undefined}>
-        <div className="window-controls" aria-label="Controles de ventana">
-          <button className="close-window" aria-label="Cerrar aplicación" title="Cerrar" onClick={()=>bridge("control","cerrar")}><span>×</span></button>
-          <button className="minimize-window" aria-label="Minimizar ventana" title="Minimizar" onClick={()=>bridge("control","minimizar")}><span>−</span></button>
-          <button className="maximize-window" aria-label="Restaurar o maximizar ventana" title="Restaurar o maximizar" onClick={()=>bridge("control","ampliar")}><span>+</span></button>
-        </div>
-        <div className="brand pywebview-drag-region">
+        <div className="brand">
           <span className="brand-mark">
             <Hotel size={22} />
           </span>
@@ -397,7 +427,7 @@ function App() {
             <small>Gestión de reservas</small>
           </div>
         </div>
-        <div className="liquid-nav"><LiquidGlass displacementScale={70} blurAmount={0.06} saturation={155} aberrationIntensity={1.3} elasticity={0} cornerRadius={28} padding="6px" overLight style={{position:"relative",top:0,left:0,transform:"none"}}><nav aria-label="Secciones">
+        <div className="nav-host" ref={navRef}><div className="liquid-nav"><LiquidGlass mode="shader" displacementScale={40} blurAmount={0.04} saturation={125} aberrationIntensity={1.6} elasticity={reducedMotion ? 0 : 0.25} cornerRadius={28} padding="6px" overLight={false} style={{position:"absolute",top:"50%",left:"50%"}}><nav aria-label="Secciones">
           {nav.filter(([n]) => ["Agenda", "Habitaciones"].includes(n)).map(([n, I]) => (
             <button
               key={n}
@@ -405,6 +435,7 @@ function App() {
               aria-current={view === n ? "page" : undefined}
               className={view === n ? "selected" : ""}
               onClick={() => {
+                setMoreOpen(false);
                 setView(n);
                 setSearch("");
                 setPanel(null);
@@ -418,13 +449,11 @@ function App() {
               )}
             </button>
           ))}
-          <details className="more-menu">
-            <summary><Settings2 size={17}/>Más</summary>
-            <div className="more-popover">
-              {nav.filter(([n]) => !["Agenda", "Habitaciones"].includes(n)).map(([n,I]) => <button key={n} disabled={busy} onClick={e=>{setView(n);setSearch("");setPanel(null);setFound(undefined);e.currentTarget.closest("details").open=false;}}><I size={17}/>{n}</button>)}
-            </div>
-          </details>
+          <button ref={moreRef} aria-expanded={moreOpen} aria-controls="more-options" onClick={()=>setMoreOpen(!moreOpen)}><Settings2 size={17}/>Más</button>
         </nav></LiquidGlass></div>
+        {moreOpen && <div className="more-popover" id="more-options" aria-label="Más secciones">
+          {nav.filter(([n]) => !["Agenda", "Habitaciones"].includes(n)).map(([n,I]) => <button key={n} disabled={busy} onClick={()=>{setView(n);setSearch("");setPanel(null);setFound(undefined);setMoreOpen(false);moreRef.current?.focus();}}><I size={19}/>{n}</button>)}
+        </div>}</div>
       </aside>
       <main className="main" inert={panel ? true : undefined}>
         <header className="topbar">
@@ -765,12 +794,14 @@ function App() {
                   <strong>{money(h.tarifa)}</strong>
                 </td>
                 <td>
-                  <Estado value={h.estado} />
+                  <Estado value={h.estado === "Disponible" ? "Disponible hoy" : h.estado} />
+                  {h.proxima_reserva && <small>Reserva desde {fecha(h.proxima_reserva)}</small>}
                 </td>
                 <td>
                   {h.estado === "Disponible" && <button className="room-reserve" disabled={busy} onClick={() => open("reserva", {numero:h.numero})}>Reservar</button>}
                   <button
-                    disabled={busy}
+                    disabled={busy || !h.puede_mantenimiento}
+                    title={!h.puede_mantenimiento ? "Tiene reservas vigentes; no se puede bloquear la habitación." : undefined}
                     onClick={() =>
                       ask(
                         h.mantenimiento
@@ -1442,3 +1473,4 @@ function App() {
   );
 }
 createRoot(document.getElementById("root")).render(<App />);
+

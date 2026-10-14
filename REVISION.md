@@ -24,3 +24,10 @@ Prototipo académico de una computadora y un operador. No hay reembolsos, factur
 Se sustituyó la composición de tarjetas por una ventana continua con tabla y separadores. Navegación liquid-glass-react, editor esmerilado y cabecera integrada; textos operativos de 16–18 px. Reserva y huésped se guardan juntos; DNI conocido recupera el nombre, una noche es el valor inicial y Recibir actúa con un clic. El registro correcto vuelve a Recepción y despeja la búsqueda para mostrar la reserva. La disponibilidad actual distingue Reservada y se valida nuevamente para el intervalo.
 
 42 pruebas Python aprobadas, construcción React y recorridos con datos ficticios en Windows comprobados. El .exe y la revisión en otro Windows siguen pendientes.
+
+## Entrega 10
+
+Se restauró la barra nativa de Windows. Más es un desplegable controlado en una capa independiente y se cierra al salir con el foco, pulsar fuera, Escape o elegir una sección. El vidrio utiliza el modo shader, elasticidad 0.25 y reflejos de liquid-glass-react; ya no se anulan sus transforms ni se aplica el filtro al menú. Se muestra Disponible hoy y la próxima reserva futura. Mantenimiento queda deshabilitado si hay reservas vigentes. GUIA_USO.md explica cada sección y el alcance de Espera.
+
+43 pruebas Python aprobadas y construcción React exitosa. Arrastre nativo y cierre al pulsar fuera verificados en Windows.
+
