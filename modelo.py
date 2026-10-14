@@ -71,6 +71,7 @@ class Hotel:
             a, b = (date.fromisoformat(entrada), date.fromisoformat(salida))
         except (ValueError, TypeError):
             raise ValueError('Fecha inválida.')
+        exigir(a.isoformat() == entrada and b.isoformat() == salida, 'Usa fechas en formato AAAA-MM-DD.')
         exigir(a >= self.reloj(), 'No puedes reservar una entrada en el pasado.')
         exigir(1 <= (b - a).days <= 365, 'La estadía debe durar entre 1 y 365 noches.')
         return (b - a).days

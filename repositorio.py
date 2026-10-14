@@ -8,7 +8,7 @@ from uuid import UUID
 from modelo import Hotel
 
 def validar(datos):
-    if not isinstance(datos, dict) or datos.get('version') != 1:
+    if not isinstance(datos, dict) or type(datos.get('version')) != int or datos.get('version') != 1:
         raise ValueError('Formato de datos no compatible.')
     for clave in ['huespedes','habitaciones','reservas','pagos','espera','historial']:
         if not isinstance(datos.get(clave),list) or len(datos[clave]) > 20000:
@@ -35,6 +35,8 @@ def validar(datos):
         UUID(r['id'])
         a = date.fromisoformat(r['entrada'])
         b = date.fromisoformat(r['salida'])
+        if a.isoformat() != r['entrada'] or b.isoformat() != r['salida']:
+            raise ValueError('Las fechas deben usar el formato AAAA-MM-DD.')
         h = hotel.buscar_habitacion(r['habitacion'])
         if not hotel.indice.buscar(r['dni']) or h == None or not 1 <= (b-a).days <= 365:
             raise ValueError('Referencias o fechas de reserva inválidas.')
@@ -60,6 +62,10 @@ def validar(datos):
         if saldo < 0 or (r['estado'] == 'Finalizada' and saldo != 0) or (r['estado'] == 'Cancelada' and saldo != r['total']):
             raise ValueError('Saldo incompatible con el estado de la reserva.')
     for s in datos['espera']:
+        a = date.fromisoformat(s['entrada'])
+        b = date.fromisoformat(s['salida'])
+        if a.isoformat() != s['entrada'] or b.isoformat() != s['salida'] or not 1 <= (b-a).days <= 365:
+            raise ValueError('Fechas de espera inválidas.')
         if not hotel.indice.buscar(s['dni']) or date.fromisoformat(s['salida']) <= date.fromisoformat(s['entrada']) or type(s['personas']) != int or not 1 <= s['personas'] <= 20:
             raise ValueError('Solicitud de espera inválida.')
     for item in datos['historial']:

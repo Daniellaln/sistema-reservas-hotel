@@ -60,3 +60,15 @@ class Cobros(unittest.TestCase):
         self.h.pago(self.r['id'],'160','Yape')
         self.h.datos['pagos'][0]['monto']=16001
         with self.assertRaises(ValueError):validar(self.h.datos)
+
+    def test_importacion_fechas_no_canonicas(self):
+        self.r['entrada']='20261013'
+        with self.assertRaises(ValueError):validar(self.h.datos)
+
+    def test_version_booleana_rechazada(self):
+        self.h.datos['version']=True
+        with self.assertRaises(ValueError):validar(self.h.datos)
+
+    def test_espera_importada_mayor_a_un_ano(self):
+        self.h.datos['espera'].append({'dni':'12345678','entrada':'2026-10-13','salida':'2028-10-13','personas':1})
+        with self.assertRaises(ValueError):validar(self.h.datos)

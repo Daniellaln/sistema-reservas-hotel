@@ -148,9 +148,11 @@ function App() {
   }, [order]);
   useEffect(() => {
     if (panel) {
-      focusRef.current = document.activeElement;
       panelRef.current?.querySelector("input,select,button")?.focus();
-    } else focusRef.current?.focus();
+    } else {
+      if (focusRef.current?.isConnected) focusRef.current.focus();
+      focusRef.current = null;
+    }
   }, [panel?.type]);
   useEffect(() => {
     if (confirm) dialogRef.current?.showModal();
@@ -159,14 +161,26 @@ function App() {
   useEffect(() => {
     function key(e) {
       if (e.key === "Escape" && !busy) {
-        setPanel(null);
-        setConfirm(null);
+        if (confirm) setConfirm(null);
+        else setPanel(null);
       }
     }
     window.addEventListener("keydown", key);
     return () => window.removeEventListener("keydown", key);
-  }, [busy]);
+  }, [busy, confirm]);
+  function keepFocus(e) {
+    if (e.key !== "Tab" || confirm) return;
+    const controls = [...panelRef.current.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled)')];
+    if (!controls.length) return;
+    const first = controls[0], last = controls[controls.length - 1];
+    if (e.shiftKey && document.activeElement === first) {
+      e.preventDefault(); last.focus();
+    } else if (!e.shiftKey && document.activeElement === last) {
+      e.preventDefault(); first.focus();
+    }
+  }
   function open(type, record = null) {
+    if (!panel) focusRef.current = document.activeElement;
     seq.current++;
     setPanel({ type, record });
     setNotice(null);
@@ -348,7 +362,7 @@ function App() {
   }[view];
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside className="sidebar" inert={panel ? true : undefined}>
         <div className="brand">
           <span className="brand-mark">
             <Hotel size={22} />
@@ -392,7 +406,7 @@ function App() {
           </div>
         </div>
       </aside>
-      <main className="main">
+      <main className="main" inert={panel ? true : undefined}>
         <header className="topbar">
           <div className="breadcrumb">
             Hotel <ChevronRight size={14} />
@@ -563,8 +577,8 @@ function App() {
                     </td>
                     <td>
                       <strong>{money(r.total)}</strong>
-                      <small className={r.saldo > 0 ? "balance" : ""}>
-                        {r.saldo ? money(r.saldo) + " pendiente" : "Pagado"}
+                      <small className={r.saldo > 0 && r.estado !== "Cancelada" ? "balance" : ""}>
+                        {r.estado === "Cancelada" ? "Sin saldo exigible" : r.saldo ? money(r.saldo) + " pendiente" : "Pagado"}
                       </small>
                     </td>
                     <td>
@@ -1090,6 +1104,9 @@ function App() {
           <aside
             className="editor glass"
             ref={panelRef}
+            role="dialog"
+            aria-modal="true"
+            onKeyDown={keepFocus}
             aria-label="Editor de recepción"
           >
             <div className="editor-head">
@@ -1150,7 +1167,7 @@ function App() {
                   </div>
                   <div>
                     <dt>Saldo</dt>
-                    <dd>{money(panel.record.saldo)}</dd>
+                    <dd>{panel.record.estado === "Cancelada" ? "No exigible" : money(panel.record.saldo)}</dd>
                   </div>
                 </dl>
                 <p className="muted">Código: {panel.record.id}</p>

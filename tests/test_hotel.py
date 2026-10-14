@@ -19,6 +19,10 @@ class Reservas(unittest.TestCase):
         for a,b in [('2020-01-01','2020-01-02'),('2026-10-13','2026-10-13'),('2027-02-30','2027-03-01'),('2026-10-15','2026-10-14')]:
             with self.assertRaises(ValueError):self.h.reserva('12345678','101',a,b,1)
 
+    def test_fecha_basica_no_rompe_comparacion(self):
+        with self.assertRaises(ValueError):
+            self.h.reserva('12345678','101','20261013','20261015',1)
+
     def test_intervalos(self):
         r = self.crear()
         with self.assertRaises(ValueError):self.h.reserva('87654321','101','2026-10-14','2026-10-16',1)

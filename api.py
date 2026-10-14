@@ -187,7 +187,7 @@ class API:
         with self._lock:
             antes = deepcopy(self._hotel.datos)
             try:
-                if revision != self._revision:
+                if type(revision) != int or revision != self._revision:
                     raise ValueError('Actualiza la vista antes de importar.')
                 rutas = self._ventana.create_file_dialog(webview.FileDialog.OPEN,allow_multiple=False,file_types=('Datos JSON (*.json)',))
                 if not rutas:

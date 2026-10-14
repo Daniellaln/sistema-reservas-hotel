@@ -4,6 +4,9 @@ from pathlib import Path
 from datetime import date
 from unittest.mock import patch
 from concurrent.futures import ThreadPoolExecutor
+from types import SimpleNamespace
+import json
+import sys
 from api import API
 
 class Puente(unittest.TestCase):
@@ -96,3 +99,32 @@ class Puente(unittest.TestCase):
         finally:primero.close()
         segundo=bloquear(Path(self.tmp.name))
         segundo.close()
+
+    def test_cancelada_no_se_suma_a_deuda(self):
+        self.demo()
+        r=self.api.estado()['reservas'][0]
+        resultado=self.ejecutar('estado',{'id':r['id'],'estado':'Cancelada'})
+        self.assertTrue(resultado['ok'])
+        self.assertEqual(resultado['datos']['resumen']['pendiente'],39000)
+        self.assertEqual(len(resultado['datos']['reservas']),2)
+
+    def test_importacion_invalida_conserva_estado_y_archivo(self):
+        self.demo()
+        antes=self.api.estado()
+        archivo=self.api._repo.archivo.read_text(encoding='utf-8')
+        invalido=Path(self.tmp.name)/'invalido.json'
+        invalido.write_text('{error',encoding='utf-8')
+        self.api._ventana=SimpleNamespace(create_file_dialog=lambda *a,**k:[str(invalido)])
+        modulo=SimpleNamespace(FileDialog=SimpleNamespace(OPEN=10))
+        with patch.dict(sys.modules,{'webview':modulo}):
+            resultado=self.api.importar(antes['revision'])
+        self.assertFalse(resultado['ok'])
+        self.assertEqual(self.api.estado(),antes)
+        self.assertEqual(self.api._repo.archivo.read_text(encoding='utf-8'),archivo)
+
+    def test_revision_booleana_no_importa(self):
+        self.api._ventana=SimpleNamespace(create_file_dialog=lambda *a,**k:None)
+        modulo=SimpleNamespace(FileDialog=SimpleNamespace(OPEN=10))
+        with patch.dict(sys.modules,{'webview':modulo}):
+            resultado=self.api.importar(False)
+        self.assertFalse(resultado['ok'])

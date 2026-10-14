@@ -37,7 +37,7 @@ def main():
         interfaz = base / 'frontend' / 'build-ui' / 'index.html'
         if not interfaz.exists():
             raise ValueError('Falta construir la interfaz. Ejecuta PREPARAR.bat primero.')
-        ventana = webview.create_window('Sistema de Gestión de Reservas de Hotel',str(interfaz),js_api=api,width=1360,height=900,min_size=(1080,720),background_color='#F6F7FA')
+        ventana = webview.create_window('Sistema de Gestión de Reservas de Hotel',str(interfaz),js_api=api,width=1200,height=760,min_size=(900,560),maximized=True,background_color='#F6F7FA')
         api._ventana = ventana
         webview.start(gui='edgechromium',debug=False)
     except Exception as error:
