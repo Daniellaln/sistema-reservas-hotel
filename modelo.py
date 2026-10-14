@@ -136,6 +136,15 @@ class Hotel:
         pendiente = reserva['total'] - pagado
         return pendiente
 
+    def pago(self, identificador, monto, metodo):
+        r = self.obtener(identificador)
+        exigir(r['estado'] in ['Confirmada', 'En estancia'], 'Esta reserva no admite pagos.')
+        n = centimos(monto)
+        exigir(n <= self.saldo(identificador), 'El pago supera el saldo pendiente.')
+        exigir(metodo in ['Efectivo', 'Tarjeta', 'Yape', 'Transferencia'], 'Método inválido.')
+        self.datos['pagos'].append({'id': str(uuid4()), 'reserva': identificador, 'monto': n, 'metodo': metodo, 'fecha': datetime.now().isoformat(timespec='seconds')})
+        self.registrar('Cobro ' + metodo + ' · ' + identificador[:8])
+
     def estado(self, identificador, estado):
         r = self.obtener(identificador)
         if estado == 'Cancelada':
