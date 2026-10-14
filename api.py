@@ -49,6 +49,8 @@ class API:
                 h['estado'] = 'Mantenimiento'
             elif self._hotel.tiene_estancia(h['numero']):
                 h['estado'] = 'Ocupada'
+            elif not self._hotel.disponible(h['numero'],self._reloj().isoformat(),(self._reloj()+timedelta(days=1)).isoformat()):
+                h['estado'] = 'Reservada'
         for i,s in enumerate(d['espera']):
             s['orden'] = i+1
             s['nombre'] = self._hotel.indice.buscar(s['dni'])['nombre']
@@ -58,6 +60,21 @@ class API:
         d['hoy'] = self._reloj().isoformat()
         d['resumen'] = {'ingresos':ingresos,'pendiente':pendiente,'abiertas':abiertas,'llegadas':llegadas}
         return d
+
+    def control(self, accion):
+        if accion == 'cerrar':
+            self._ventana.destroy()
+        elif accion == 'minimizar':
+            self._ventana.minimize()
+        elif accion == 'ampliar':
+            if getattr(self, '_ampliada', True):
+                self._ventana.restore()
+                self._ampliada = False
+            else:
+                self._ventana.maximize()
+                self._ampliada = True
+        else:
+            raise ValueError('Control de ventana inválido.')
 
     def estado(self, orden='entrada'):
         with self._lock:
@@ -88,6 +105,8 @@ class API:
         elif accion == 'habitacion':
             h.habitacion(texto('numero'),texto('tipo'),self._numero(d,'capacidad'),texto('tarifa'))
         elif accion == 'reserva':
+            if texto('nuevo') == '1':
+                h.huesped(texto('dni'),texto('nombre'),texto('telefono'))
             h.reserva(texto('dni'),texto('numero'),texto('entrada'),texto('salida'),self._numero(d,'personas'))
         elif accion == 'pago':
             h.pago(texto('id'),texto('monto'),texto('metodo'))

@@ -128,3 +128,20 @@ class Puente(unittest.TestCase):
         with patch.dict(sys.modules,{'webview':modulo}):
             resultado=self.api.importar(False)
         self.assertFalse(resultado['ok'])
+
+    def test_reserva_registra_huesped_en_un_paso(self):
+        r=self.ejecutar('reserva',{'nuevo':'1','dni':'20000001','nombre':'Ana','telefono':'','numero':'101','entrada':'2026-10-13','salida':'2026-10-15','personas':'1'})
+        self.assertTrue(r['ok'])
+        self.assertEqual(len(r['datos']['huespedes']),1)
+        self.assertEqual(len(r['datos']['reservas']),1)
+
+    def test_reserva_fallida_no_deja_huesped_suelto(self):
+        r=self.ejecutar('reserva',{'nuevo':'1','dni':'20000001','nombre':'Ana','telefono':'','numero':'101','entrada':'2026-10-13','salida':'2026-10-15','personas':'3'})
+        self.assertFalse(r['ok'])
+        self.assertEqual(r['datos']['huespedes'],[])
+
+    def test_habitacion_reservada_hoy_no_se_ofrece_como_disponible(self):
+        self.demo()
+        habitaciones={h['numero']:h for h in self.api.estado()['habitaciones']}
+        self.assertEqual(habitaciones['101']['estado'],'Reservada')
+        self.assertEqual(habitaciones['102']['estado'],'Disponible')

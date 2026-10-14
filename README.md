@@ -41,3 +41,9 @@ CURSO.md contiene las explicaciones para la sustentación. PRUEBAS_MANUALES.md r
 Un equipo y un operador. Sin facturación fiscal, reembolsos, edición de entidades ni usuarios/permisos. No es un sistema hotelero de producción. Las reservas vencidas y las solicitudes vencidas se gestionan manualmente; el check-out temprano no recalcula el total. El árbol no se equilibra automáticamente. Los JSON anteriores del prototipo Tkinter o JavaScript no se importan como parte de estas entregas. No introducir datos reales en una demostración de clase.
 
 Documentación de las tecnologías: https://pywebview.flowrl.com/guide/interdomain.html y https://vite.dev/guide/.
+
+## Recepción rápida (entrega 09)
+
+Nueva reserva permite registrar al huésped y la reserva en un solo formulario. Escribir un DNI existente recupera el nombre; no hay que cambiar entre formularios. Los valores iniciales son entrada hoy, salida mañana y una persona. Revisarlos antes de guardar. Reservar desde Habitaciones preselecciona la habitación, y la cotización comprueba el intervalo solicitado.
+
+Recibir cambia una reserva válida a En estancia directamente. La cabecera incluye controles funcionales para cerrar, minimizar y restaurar/maximizar; arrastrar la zona del nombre Hotel mueve la ventana restaurada. La navegación usa liquid-glass-react y la presentación concentra el vidrio en los controles. Consulta DESIGN.md y TERCEROS.md.

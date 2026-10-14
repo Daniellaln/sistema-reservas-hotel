@@ -21,7 +21,7 @@ Datos ficticios aislados en HOTEL_DATA_DIR, sin modificar datos reales.
 
 ## Pruebas Python
 
-39 pruebas aprobadas: estructuras, homónimos, duplicados, fechas, solapamientos, capacidad, importes, estados, mantenimiento, asignación fallida que conserva la cola, ordenamiento, archivos dañados, fallos de escritura, importación inválida, dobles envíos y bloqueo de otra instancia. React se construye correctamente.
+42 pruebas aprobadas: estructuras, homónimos, duplicados, fechas, solapamientos, capacidad, importes, estados, mantenimiento, asignación fallida que conserva la cola, ordenamiento, archivos dañados, fallos de escritura, importación inválida, dobles envíos y bloqueo de otra instancia. React se construye correctamente.
 
 ## Pendiente antes de release
 
@@ -30,3 +30,18 @@ Datos ficticios aislados en HOTEL_DATA_DIR, sin modificar datos reales.
 - [ ] Verificar actualización y persistencia del paquete en ese equipo.
 
 La revisión visual previa pendiente por expiración del permiso ya se realizó. Esto no garantiza ausencia absoluta de errores ni certifica uso comercial. El siguiente paso es empaquetar y probar el ejecutable para v1.0.0.
+
+
+
+## Revisión de recepción rápida — entrega 09
+
+- [x] Recibir un huésped con un clic: Confirmada → En estancia; siguiente acción Cobrar.
+- [x] Escribir DNI existente y recuperar nombre, guardando otra reserva sin duplicar al huésped.
+- [x] Reservar desde Habitaciones con habitación preseleccionada y cotización inicial de una noche.
+- [x] Registrar DNI/nombre nuevo y reserva en una sola confirmación: tres huéspedes y tres reservas después de la prueba.
+- [x] Habitación reservada para hoy aparece Reservada; regresión Python añadida.
+- [x] Cotización bloquea la confirmación de un intervalo no disponible; Python vuelve a validar al guardar.
+- [x] Cabecera integrada; botones verde y rojo restauran/maximizan y cierran la ventana.
+- [x] Formulario de 500 px, campos de 17 px, total y confirmar visibles en una ventana de 1200 × 760.
+
+42 pruebas Python aprobadas y construcción React exitosa. Capturas de pantalla reales con datos ficticios. No se ha realizado una medición de tiempos con recepcionistas ni una prueba de carga representativa.

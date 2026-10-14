@@ -23,6 +23,7 @@ import {
   ChartNoAxesCombined,
 } from "lucide-react";
 import "./style.css";
+import LiquidGlass from "liquid-glass-react";
 
 const money = (n) =>
   new Intl.NumberFormat("es-PE", { style: "currency", currency: "PEN" }).format(
@@ -128,7 +129,9 @@ function App() {
     [reverse, setReverse] = useState(true),
     [found, setFound] = useState(undefined),
     [bootError, setBootError] = useState(""),
-    [report, setReport] = useState(null);
+    [report, setReport] = useState(null),
+    [guestDni, setGuestDni] = useState(""),
+    [guestName, setGuestName] = useState("");
   const formRef = useRef(null),
     panelRef = useRef(null),
     dialogRef = useRef(null),
@@ -148,7 +151,8 @@ function App() {
   }, [order]);
   useEffect(() => {
     if (panel) {
-      panelRef.current?.querySelector("input,select,button")?.focus();
+      panelRef.current?.querySelector('input:not([type="hidden"]),select,button')?.focus();
+      cotizar();
     } else {
       if (focusRef.current?.isConnected) focusRef.current.focus();
       focusRef.current = null;
@@ -170,7 +174,7 @@ function App() {
   }, [busy, confirm]);
   function keepFocus(e) {
     if (e.key !== "Tab" || confirm) return;
-    const controls = [...panelRef.current.querySelectorAll('button:not(:disabled),input:not(:disabled),select:not(:disabled)')];
+    const controls = [...panelRef.current.querySelectorAll('button:not(:disabled),input:not(:disabled):not([type="hidden"]),select:not(:disabled)')];
     if (!controls.length) return;
     const first = controls[0], last = controls[controls.length - 1];
     if (e.shiftKey && document.activeElement === first) {
@@ -183,6 +187,8 @@ function App() {
     if (!panel) focusRef.current = document.activeElement;
     seq.current++;
     setPanel({ type, record });
+    setGuestDni(record?.dni || "");
+    setGuestName("");
     setNotice(null);
     setQuote(null);
   }
@@ -228,11 +234,15 @@ function App() {
     setConfirm({ title, text, run });
   }
   function change(r, estado) {
+    if (estado === "En estancia") {
+      operate("estado", { id: r.id, estado });
+      return;
+    }
     ask(
       estado === "En estancia"
-        ? "Confirmar check-in"
+        ? "Recibir al huésped"
         : estado === "Finalizada"
-          ? "Confirmar check-out"
+          ? "Finalizar la estadía"
           : "Cancelar reserva",
       `${r.nombre} · Habitación ${r.habitacion}. ${estado === "Cancelada" ? "Se conservará la reserva en el historial. La cancelación con pagos está bloqueada." : estado === "Finalizada" ? "El saldo debe estar pagado." : "La fecha de hoy debe estar dentro de la estadía."}`,
       () => operate("estado", { id: r.id, estado }),
@@ -242,7 +252,12 @@ function App() {
     e.preventDefault();
     const p = Object.fromEntries(new FormData(e.currentTarget));
     const action = panel.type === "cobro" ? "pago" : panel.type;
-    await operate(action, p);
+    const ok = await operate(action, p);
+    if (ok && action === "reserva") {
+      setView("Agenda");
+      setFilter("Activas");
+      setSearch("");
+    }
   }
   async function cotizar() {
     if (panel?.type !== "reserva" || !formRef.current) return;
@@ -252,6 +267,7 @@ function App() {
       setQuote(null);
       return;
     }
+    setQuote(null);
     try {
       const result = await bridge(
         "cotizar",
@@ -262,7 +278,7 @@ function App() {
       );
       if (n === seq.current) setQuote(result);
     } catch (e) {
-      setQuote({ ok: false, mensaje: e.message });
+      if (n === seq.current) setQuote({ ok: false, mensaje: e.message });
     }
   }
   if (!data)
@@ -277,6 +293,10 @@ function App() {
       </div>
     );
   const term = search.trim().toLocaleLowerCase("es");
+  const knownGuest = data.huespedes.find((h) => h.dni === guestDni);
+  const tomorrow = new Date(data.hoy + "T12:00:00");
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const nextDay = `${tomorrow.getFullYear()}-${String(tomorrow.getMonth()+1).padStart(2,"0")}-${String(tomorrow.getDate()).padStart(2,"0")}`;
   const matches = (...items) =>
     items.some((x) =>
       String(x ?? "")
@@ -294,7 +314,7 @@ function App() {
         Todas: true,
       }[filter],
   );
-  const tabs = ["Activas", "Llegadas", "En estancia", "Salidas", "Todas"];
+  const tabs = ["Activas", "Llegadas", "Todas"];
   const eligible = data.reservas.filter(
     (r) => ["Confirmada", "En estancia"].includes(r.estado) && r.saldo > 0,
   );
@@ -363,7 +383,12 @@ function App() {
   return (
     <div className="app-shell">
       <aside className="sidebar" inert={panel ? true : undefined}>
-        <div className="brand">
+        <div className="window-controls" aria-label="Controles de ventana">
+          <button className="close-window" aria-label="Cerrar aplicación" title="Cerrar" onClick={()=>bridge("control","cerrar")}><span>×</span></button>
+          <button className="minimize-window" aria-label="Minimizar ventana" title="Minimizar" onClick={()=>bridge("control","minimizar")}><span>−</span></button>
+          <button className="maximize-window" aria-label="Restaurar o maximizar ventana" title="Restaurar o maximizar" onClick={()=>bridge("control","ampliar")}><span>+</span></button>
+        </div>
+        <div className="brand pywebview-drag-region">
           <span className="brand-mark">
             <Hotel size={22} />
           </span>
@@ -372,12 +397,8 @@ function App() {
             <small>Gestión de reservas</small>
           </div>
         </div>
-        <div className="workspace">
-          <span className="dot" />
-          Recepción <span className="local-badge">LOCAL</span>
-        </div>
-        <nav aria-label="Secciones">
-          {nav.map(([n, I]) => (
+        <div className="liquid-nav"><LiquidGlass displacementScale={70} blurAmount={0.06} saturation={155} aberrationIntensity={1.3} elasticity={0} cornerRadius={28} padding="6px" overLight style={{position:"relative",top:0,left:0,transform:"none"}}><nav aria-label="Secciones">
+          {nav.filter(([n]) => ["Agenda", "Habitaciones"].includes(n)).map(([n, I]) => (
             <button
               key={n}
               disabled={busy}
@@ -391,20 +412,19 @@ function App() {
               }}
             >
               <I size={18} />
-              {n}
+              {n === "Agenda" ? "Recepción" : n}
               {n === "Espera" && data.espera.length > 0 && (
                 <b>{data.espera.length}</b>
               )}
             </button>
           ))}
-        </nav>
-        <div className="side-bottom">
-          <div className="avatar">R</div>
-          <div>
-            <strong>Recepción</strong>
-            <small>Un operador · datos locales</small>
-          </div>
-        </div>
+          <details className="more-menu">
+            <summary><Settings2 size={17}/>Más</summary>
+            <div className="more-popover">
+              {nav.filter(([n]) => !["Agenda", "Habitaciones"].includes(n)).map(([n,I]) => <button key={n} disabled={busy} onClick={e=>{setView(n);setSearch("");setPanel(null);setFound(undefined);e.currentTarget.closest("details").open=false;}}><I size={17}/>{n}</button>)}
+            </div>
+          </details>
+        </nav></LiquidGlass></div>
       </aside>
       <main className="main" inert={panel ? true : undefined}>
         <header className="topbar">
@@ -428,7 +448,7 @@ function App() {
           <div>
             <h1>
               {view === "Agenda"
-                ? "Agenda de recepción"
+                ? "Recepción"
                 : view === "Datos"
                   ? "Datos y estructuras"
                   : view === "Espera"
@@ -439,7 +459,7 @@ function App() {
               {
                 {
                   Agenda:
-                    "Llegadas, estancias y salidas. Todo en una misma vista.",
+                    "Reserva, recibe y cobra. Sin perder el hilo.",
                   Huéspedes: "Identificación y contacto para cada estadía.",
                   Habitaciones: "Tarifas, capacidad y estado de atención.",
                   Cobros:
@@ -511,7 +531,7 @@ function App() {
                     className={filter === t ? "active" : ""}
                     onClick={() => setFilter(t)}
                   >
-                    {t}
+                    {t === "Activas" ? "En curso" : t === "Llegadas" ? "Hoy llegan" : t}
                   </button>
                 ))}
               </div>
@@ -569,7 +589,7 @@ function App() {
                         {fecha(r.entrada)} <span>→</span> {fecha(r.salida)}
                       </strong>
                       <small>
-                        {r.noches} noches
+                        {r.noches} {r.noches === 1 ? "noche" : "noches"}
                         {r.salida <= data.hoy && r.estado === "En estancia"
                           ? " · salida pendiente"
                           : ""}
@@ -590,7 +610,7 @@ function App() {
                     <td>
                       <div className="row-actions">
                         {r.saldo > 0 &&
-                          ["Confirmada", "En estancia"].includes(r.estado) && (
+                          r.estado === "En estancia" && (
                             <button
                               disabled={busy}
                               onClick={() => open("cobro", r)}
@@ -601,17 +621,17 @@ function App() {
                         {r.estado === "Confirmada" && (
                           <button
                             disabled={busy}
-                            onClick={() => change(r, "En estancia")}
+                            onClick={() => r.entrada <= data.hoy && data.hoy < r.salida ? change(r, "En estancia") : open("detalle", r)}
                           >
-                            Check-in <ArrowUpRight size={13} />
+                            {r.entrada <= data.hoy && data.hoy < r.salida ? "Recibir" : "Ver"} <ArrowUpRight size={13} />
                           </button>
                         )}
-                        {r.estado === "En estancia" && (
+                        {r.estado === "En estancia" && r.saldo === 0 && (
                           <button
                             disabled={busy}
                             onClick={() => change(r, "Finalizada")}
                           >
-                            Check-out
+                            Finalizar estadía
                           </button>
                         )}
                         <IconButton
@@ -635,25 +655,23 @@ function App() {
                 text={
                   data.reservas.length
                     ? "Prueba otro filtro o una búsqueda diferente."
-                    : "Registra un huésped y confirma su primera reserva."
+                    : "Crea la reserva y registra al huésped en un solo paso."
                 }
                 action={
                   <button
                     onClick={() =>
-                      data.huespedes.length ? open("reserva") : open("huesped")
+                      open("reserva")
                     }
                   >
                     <Plus size={16} />
-                    {data.huespedes.length
-                      ? "Crear reserva"
-                      : "Registrar huésped"}
+                    Crear reserva
                   </button>
                 }
               />
             )}
             <div className="table-footer">
               {reservas.length} reservas en esta vista{" "}
-              <span>Ordenadas con Merge Sort en Python</span>
+              <span>Selecciona una reserva para ver su detalle</span>
             </div>
           </>
         )}
@@ -742,7 +760,7 @@ function App() {
                   <span className="room-number">{h.numero}</span>
                 </td>
                 <td>{h.tipo}</td>
-                <td>{h.capacidad} personas</td>
+                <td>{h.capacidad} {h.capacidad === 1 ? "persona" : "personas"}</td>
                 <td>
                   <strong>{money(h.tarifa)}</strong>
                 </td>
@@ -750,6 +768,7 @@ function App() {
                   <Estado value={h.estado} />
                 </td>
                 <td>
+                  {h.estado === "Disponible" && <button className="room-reserve" disabled={busy} onClick={() => open("reserva", {numero:h.numero})}>Reservar</button>}
                   <button
                     disabled={busy}
                     onClick={() =>
@@ -1092,7 +1111,7 @@ function App() {
         )}
         <footer className="page-footer">
           <span>Sistema de Gestión de Reservas de Hotel</span>
-          <span>Python + React · Prototipo académico</span>
+          <span>Datos guardados en este equipo</span>
         </footer>
       </main>
       {panel && (
@@ -1178,7 +1197,7 @@ function App() {
                         className="primary"
                         onClick={() => change(panel.record, "En estancia")}
                       >
-                        Check-in
+                        Recibir huésped
                       </button>
                       <button
                         className="danger"
@@ -1193,7 +1212,7 @@ function App() {
                       className="primary"
                       onClick={() => change(panel.record, "Finalizada")}
                     >
-                      Check-out
+                      Finalizar estadía
                     </button>
                   )}
                   {panel.record.saldo > 0 &&
@@ -1211,24 +1230,13 @@ function App() {
                 <div className="form-body">
                   {["reserva", "espera"].includes(panel.type) && (
                     <>
-                      <Field
-                        label="Huésped"
-                        name="dni"
-                        defaultValue={panel.record?.dni || ""}
-                      >
-                        {peopleOptions()}
-                      </Field>
-                      {!data.huespedes.length && (
-                        <button
-                          type="button"
-                          className="text-link"
-                          onClick={() => open("huesped")}
-                        >
-                          Registrar un huésped primero
-                        </button>
-                      )}
+                      {panel.type === "reserva" ? <>
+                        <input type="hidden" name="nuevo" value={knownGuest ? "0" : "1"}/>
+                        <Field label="DNI del huésped" name="dni" inputMode="numeric" pattern="[0-9]{8}" maxLength="8" placeholder="8 dígitos" value={guestDni} onChange={e=>setGuestDni(e.target.value)}/>
+                        <Field label={knownGuest ? "Huésped encontrado" : "Nombre completo"} name="nombre" minLength="2" maxLength="100" autoComplete="name" value={knownGuest?.nombre || guestName} readOnly={Boolean(knownGuest)} onChange={e=>setGuestName(e.target.value)}/>
+                      </> : <Field label="Huésped" name="dni" defaultValue={panel.record?.dni || ""}>{peopleOptions()}</Field>}
                       {panel.type === "reserva" && (
-                        <Field label="Habitación" name="numero">
+                        <Field label="Habitación" name="numero" defaultValue={panel.record?.numero || ""}>
                           {roomOptions()}
                         </Field>
                       )}
@@ -1245,6 +1253,7 @@ function App() {
                           name="salida"
                           type="date"
                           min={data.hoy}
+                          defaultValue={panel.type === "reserva" ? nextDay : undefined}
                         />
                       </div>
                       <Field
@@ -1255,20 +1264,7 @@ function App() {
                         max="20"
                         defaultValue="1"
                       />
-                      {panel.type === "reserva" && (
-                        <div className="quote">
-                          <span>Total de la estadía</span>
-                          <strong>
-                            {quote?.ok ? money(quote.total) : "—"}
-                          </strong>
-                          <p>
-                            {quote?.ok
-                              ? `${quote.noches} noches · ${quote.disponible ? "Habitación disponible" : "Habitación no disponible"}`
-                              : quote?.mensaje ||
-                                "Completa las fechas para calcular el total."}
-                          </p>
-                        </div>
-                      )}
+
                     </>
                   )}
                   {panel.type === "huesped" && (
@@ -1382,6 +1378,7 @@ function App() {
                     </>
                   )}
                 </div>
+                {panel.type === "reserva" && <div className="compact-quote"><div><span>Total de la estadía</span><small>{quote?.ok ? `${quote.noches} ${quote.noches === 1 ? "noche" : "noches"} · ${quote.disponible ? "Disponible" : "No disponible"}` : quote?.mensaje || "Completa habitación y fechas"}</small></div><strong>{quote?.ok ? money(quote.total) : "—"}</strong></div>}
                 <div className="editor-footer">
                   <button
                     type="button"
@@ -1393,7 +1390,7 @@ function App() {
                   <button
                     className="primary clay"
                     type="submit"
-                    disabled={busy}
+                    disabled={busy || (panel.type === "reserva" && (!quote?.ok || !quote.disponible))}
                   >
                     {busy
                       ? "Guardando…"

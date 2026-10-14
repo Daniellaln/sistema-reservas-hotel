@@ -18,3 +18,9 @@ Huésped ficticio Ana Prueba, DNI 20000001. Reserva en habitación 102 del 13 al
 ## Límites
 
 Prototipo académico de una computadora y un operador. No hay reembolsos, facturación fiscal, edición de registros ni acceso compartido. La cancelación con pagos está bloqueada. El ejecutable aún no se ha generado ni probado en un Windows limpio. Las entregas previas permanecen como etapas históricas; esta corrección se entrega como commit 08.
+
+## Entrega 09: interfaz y recepción rápida
+
+Se sustituyó la composición de tarjetas por una ventana continua con tabla y separadores. Navegación liquid-glass-react, editor esmerilado y cabecera integrada; textos operativos de 16–18 px. Reserva y huésped se guardan juntos; DNI conocido recupera el nombre, una noche es el valor inicial y Recibir actúa con un clic. El registro correcto vuelve a Recepción y despeja la búsqueda para mostrar la reserva. La disponibilidad actual distingue Reservada y se valida nuevamente para el intervalo.
+
+42 pruebas Python aprobadas, construcción React y recorridos con datos ficticios en Windows comprobados. El .exe y la revisión en otro Windows siguen pendientes.
