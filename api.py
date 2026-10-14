@@ -15,9 +15,12 @@ class API:
         self._hotel = Hotel(self._repo.leer(),reloj)
         self._lock = RLock()
         self._revision = 0
+        self._orden = 'entrada'
         self._ventana = None
 
-    def _estado(self, orden='entrada'):
+    def _estado(self, orden=None):
+        if orden == None:
+            orden = self._orden
         if orden not in ['entrada','total']:
             raise ValueError('Orden inválido.')
         d = deepcopy(self._hotel.datos)
@@ -58,7 +61,9 @@ class API:
 
     def estado(self, orden='entrada'):
         with self._lock:
-            return self._estado(orden)
+            datos = self._estado(orden)
+            self._orden = orden
+            return datos
 
     def _texto(self, datos, clave, maximo=200):
         valor = datos.get(clave,'')
@@ -140,6 +145,30 @@ class API:
     def buscar(self, dni):
         with self._lock:
             return deepcopy(self._hotel.indice.buscar(dni))
+
+    def reportes(self, entrada, salida):
+        with self._lock:
+            try:
+                a = date.fromisoformat(entrada)
+                b = date.fromisoformat(salida)
+                if b < a:
+                    raise ValueError('El final del reporte debe ser igual o posterior al inicio.')
+                ingresos = 0
+                pagos = 0
+                reservas = 0
+                noches = 0
+                for pago in self._hotel.datos['pagos']:
+                    dia = date.fromisoformat(pago['fecha'][:10])
+                    if a <= dia <= b:
+                        ingresos = ingresos + pago['monto']
+                        pagos = pagos + 1
+                for r in self._hotel.datos['reservas']:
+                    if r['estado'] != 'Cancelada' and entrada <= r['entrada'] <= salida:
+                        reservas = reservas + 1
+                        noches = noches + (date.fromisoformat(r['salida'])-date.fromisoformat(r['entrada'])).days
+                return {'ok':True,'ingresos':ingresos,'pagos':pagos,'reservas':reservas,'noches':noches}
+            except (ValueError,TypeError) as error:
+                return {'ok':False,'mensaje':str(error)}
 
     def exportar(self):
         import webview

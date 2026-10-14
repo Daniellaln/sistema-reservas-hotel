@@ -66,3 +66,33 @@ class Puente(unittest.TestCase):
             d=self.api.estado('total')
             m.assert_called_once()
             self.assertLessEqual(d['reservas'][0]['total'],d['reservas'][1]['total'])
+
+    def test_reportes(self):
+        self.demo()
+        r=self.api.estado()['reservas'][0]
+        self.ejecutar('pago',{'id':r['id'],'monto':'10','metodo':'Yape'})
+        reporte=self.api.reportes('2000-01-01','2099-12-31')
+        self.assertEqual(reporte['ingresos'],1000)
+        self.assertEqual(reporte['reservas'],2)
+        self.assertEqual(reporte['noches'],5)
+        self.assertFalse(self.api.reportes('2026-10-15','2026-10-14')['ok'])
+
+    def test_orden_se_conserva_al_guardar(self):
+        self.demo()
+        self.api.estado('total')
+        resultado=self.api.operar('huesped',{'dni':'10000003','nombre':'Otro','telefono':''},1)
+        self.assertTrue(resultado['ok'])
+        totales=[r['total'] for r in resultado['datos']['reservas']]
+        self.assertEqual(totales,sorted(totales))
+
+    def test_bloqueo_de_segunda_instancia(self):
+        import sys
+        if sys.platform != 'win32':
+            self.skipTest('Bloqueo de Windows')
+        from app import bloquear
+        primero=bloquear(Path(self.tmp.name))
+        try:
+            with self.assertRaises(ValueError):bloquear(Path(self.tmp.name))
+        finally:primero.close()
+        segundo=bloquear(Path(self.tmp.name))
+        segundo.close()
