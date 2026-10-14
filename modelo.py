@@ -41,6 +41,7 @@ class Hotel:
         self.indice = arbolBinario()
         for h in self.datos['habitaciones']:
             h.setdefault('limpieza', False)
+            h.setdefault('trabajo', None)
         for h in self.datos['huespedes']:
             self.indice.agregar(h['dni'], h)
         self.cola = colaEnlazada(self.datos['espera'])
@@ -65,7 +66,7 @@ class Hotel:
         exigir(self.buscar_habitacion(numero) == None, 'Número ya registrado.')
         exigir(tipo in ['Simple', 'Doble', 'Matrimonial', 'Suite'], 'Tipo inválido.')
         exigir(1 <= capacidad <= 20, 'Capacidad de 1 a 20 personas.')
-        self.datos['habitaciones'].append({'numero': numero, 'tipo': tipo, 'capacidad': capacidad, 'tarifa': centimos(tarifa), 'mantenimiento': False, 'limpieza': False})
+        self.datos['habitaciones'].append({'numero': numero, 'tipo': tipo, 'capacidad': capacidad, 'tarifa': centimos(tarifa), 'mantenimiento': False, 'limpieza': False, 'trabajo': None})
         self.registrar('Habitación registrada · ' + numero)
 
     def rango(self, entrada, salida):
@@ -157,7 +158,7 @@ class Hotel:
             exigir(r['estado'] == 'Confirmada', 'La reserva no está confirmada.')
             h = self.buscar_habitacion(r['habitacion'])
             exigir(not h['mantenimiento'], 'La habitación está en mantenimiento.')
-            exigir(not h['limpieza'], 'La habitación está pendiente de limpieza. Márcala como lista antes de recibir al huésped.')
+            exigir(not h['limpieza'], 'La habitación está pendiente de limpieza. Inicia la limpieza y espera a que termine antes de recibir al huésped.')
             exigir(r['entrada'] <= self.reloj().isoformat() < r['salida'], 'El check-in debe estar dentro de las fechas reservadas.')
             exigir(not self.tiene_estancia(r['habitacion']), 'Hay una estancia abierta; realiza su check-out.')
         elif estado == 'Finalizada':
@@ -175,9 +176,41 @@ class Hotel:
         exigir(h, 'Habitación inexistente.')
         exigir(h['limpieza'], 'La habitación ya está lista.')
         exigir(not self.tiene_estancia(numero), 'No puedes marcar lista una habitación ocupada.')
-        exigir(not h['mantenimiento'], 'Primero habilita la habitación que está en mantenimiento.')
+        exigir(not h['mantenimiento'], 'Espera a que termine el mantenimiento.')
         h['limpieza'] = False
         self.registrar('Limpieza completada · Habitación ' + numero)
+
+    def iniciar_trabajo(self, numero, tipo, inicio):
+        h = self.buscar_habitacion(numero)
+        exigir(h, 'Habitación inexistente.')
+        exigir(h['trabajo'] == None, 'Ya hay un trabajo en curso en esta habitación.')
+        exigir(not self.tiene_estancia(numero), 'La habitación está ocupada.')
+        if tipo == 'Limpieza':
+            exigir(h['limpieza'], 'La habitación no tiene limpieza pendiente.')
+            exigir(not h['mantenimiento'], 'Primero termina el mantenimiento.')
+            duracion = 5
+        elif tipo == 'Mantenimiento':
+            exigir(not self.tiene_reservas(numero), 'Tiene reservas vigentes: no puede entrar en mantenimiento.')
+            h['mantenimiento'] = True
+            duracion = 15
+        else:
+            raise ValueError('Trabajo inválido.')
+        h['trabajo'] = {'tipo':tipo,'inicio':inicio,'duracion':duracion}
+        self.registrar(tipo + ' iniciado (simulación) · Habitación ' + numero)
+
+    def finalizar_trabajos(self, ahora):
+        cambio = False
+        for h in self.datos['habitaciones']:
+            trabajo = h['trabajo']
+            if trabajo != None and ahora >= trabajo['inicio'] + trabajo['duracion']:
+                if trabajo['tipo'] == 'Limpieza':
+                    self.limpiar(h['numero'])
+                else:
+                    h['mantenimiento'] = False
+                    self.registrar('Mantenimiento terminado (simulación) · Habitación ' + h['numero'])
+                h['trabajo'] = None
+                cambio = True
+        return cambio
 
     def mantenimiento(self, numero):
         h = self.buscar_habitacion(numero)
@@ -209,3 +242,4 @@ class Hotel:
         self.cola.desencolar()
         self.datos['espera'] = list(self.cola.listar())
         self.registrar('Primera solicitud retirada de espera')
+

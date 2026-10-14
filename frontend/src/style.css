@@ -998,3 +998,4 @@ button:disabled{cursor:not-allowed}.room-reserve{color:#007aff}
 @media(prefers-reduced-transparency:reduce){.nav-host>.more-popover,.liquid-nav .glass{background:#f8fafc}.liquid-nav .glass__warp{display:none}}
 .liquid-nav .glass{background:#ffffff58}.liquid-nav .glass__warp{background:#ffffff20}
 .liquid-nav .glass__warp{background:transparent;opacity:.55}
+.work-progress{margin-top:7px;max-width:200px}.work-progress small{font-size:14px;font-variant-numeric:tabular-nums}.work-progress progress{display:block;width:100%;height:5px;margin-top:6px;accent-color:#007aff;border:0;border-radius:6px;overflow:hidden}.work-progress progress::-webkit-progress-bar{background:#dce5f1}.work-progress progress::-webkit-progress-value{background:#007aff;border-radius:6px}

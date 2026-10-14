@@ -56,3 +56,7 @@ devolver la lista ordenada
 Mostrar primero estructuras.py y sus nodos. Demostrar dos solicitudes en espera y atender la primera. Invertir el historial. Buscar un DNI exacto con el botón de búsqueda en árbol. Ordenar la agenda por llegada y por importe; el puente usa merge_sort, no sorted. Mostrar algoritmos.py. Registrar pago parcial, intentar sobrepago y cobrar el resto antes del check-out. Exportar JSON y reiniciar para demostrar persistencia.
 
 Los nombres chu.lon y soy.leona son guiños internos: cuenta.lon suma pagos y calendario.leona comprueba intervalos. La interfaz no los expone.
+
+## Simulación de trabajos
+
+iniciar_trabajo almacena tipo, inicio y duración en un diccionario de la habitación. finalizar_trabajos recorre la lista de habitaciones y compara el plazo con el tiempo actual: O(h), siendo h la cantidad de habitaciones. Python controla la terminación y registra el evento; React solo muestra el contador. El plazo se conserva en JSON y los errores de guardado restauran el estado anterior. No se agrega un árbol o heap para una lista pequeña de trabajos independientes.

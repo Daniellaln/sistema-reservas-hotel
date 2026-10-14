@@ -141,7 +141,30 @@ function App() {
     pending = useRef(false),
     focusRef = useRef(null),
     navRef = useRef(null),
-    moreRef = useRef(null);
+    moreRef = useRef(null),
+    dataRef = useRef(null),
+    polling = useRef(false);
+  dataRef.current = data;
+  useEffect(() => {
+    if (!data?.habitaciones.some(h => h.trabajo)) return;
+    let cancelled = false;
+    const timer = setInterval(async () => {
+      if (pending.current || polling.current) return;
+      polling.current = true;
+      try {
+        const result = await bridge("estado", order);
+        if (cancelled || pending.current || result.revision < dataRef.current.revision) return;
+        const finished = dataRef.current.habitaciones.filter(h => h.trabajo && result.habitaciones.some(next => next.numero === h.numero && !next.trabajo));
+        setData(result);
+        if (finished.length) setNotice({error:false,text:finished.map(h=>`${h.trabajo.tipo} ${h.trabajo.tipo === "Limpieza" ? "terminada" : "terminado"} · Habitación ${h.numero} · ${h.trabajo.duracion}/${h.trabajo.duracion} s.`).join(" ")});
+      } catch (e) {
+        if (!cancelled) setNotice({error:true,text:"No se pudo confirmar el trabajo: " + e.message});
+      } finally {
+        polling.current = false;
+      }
+    }, 500);
+    return () => { cancelled = true; clearInterval(timer); };
+  }, [Boolean(data?.habitaciones.some(h=>h.trabajo)),order]);
   useEffect(() => {
     const preference = window.matchMedia("(prefers-reduced-motion: reduce)");
     const update = () => setReducedMotion(preference.matches);
@@ -175,7 +198,8 @@ function App() {
   useEffect(() => { setMoreOpen(false); }, [view, panel?.type]);
   async function refresh() {
     try {
-      setData(await bridge("estado", order));
+      const result = await bridge("estado", order);
+      setData(current => !current || result.revision >= current.revision ? result : current);
       setBootError("");
     } catch (e) {
       setBootError(e.message);
@@ -193,6 +217,7 @@ function App() {
       focusRef.current = null;
     }
   }, [panel?.type]);
+  useEffect(() => { if (panel?.type === "reserva") cotizar(); }, [data?.revision]);
   useEffect(() => {
     if (confirm) dialogRef.current?.showModal();
     else if (dialogRef.current?.open) dialogRef.current.close();
@@ -280,7 +305,10 @@ function App() {
           ? "Finalizar la estadía"
           : "Cancelar reserva",
       `${r.nombre} · Habitación ${r.habitacion}. ${estado === "Cancelada" ? "Se conservará la reserva en el historial. La cancelación con pagos está bloqueada." : estado === "Finalizada" ? "El saldo debe estar pagado. La habitación quedará pendiente de limpieza." : "La fecha de hoy debe estar dentro de la estadía."}`,
-      () => operate("estado", { id: r.id, estado }),
+      async () => {
+        const ok = await operate("estado", { id: r.id, estado });
+        if (ok && estado === "Finalizada") setView("Habitaciones");
+      },
     );
   }
   async function submit(e) {
@@ -796,26 +824,25 @@ function App() {
                 </td>
                 <td>
                   <Estado value={h.estado === "Disponible" ? "Disponible hoy" : h.estado} />
+                  {h.trabajo && <div className="work-progress"><small>Simulación · {h.trabajo.transcurrido} / {h.trabajo.duracion} s</small><progress aria-label={h.trabajo.tipo + " de habitación " + h.numero} value={h.trabajo.transcurrido} max={h.trabajo.duracion}/></div>}
                   {h.proxima_reserva && <small>Reserva desde {fecha(h.proxima_reserva)}</small>}
                 </td>
                 <td>
-                  {h.estado === "Pendiente de limpieza" && <button className="room-reserve" disabled={busy} onClick={() => operate("limpiar", {numero:h.numero}, false)}>Marcar lista</button>}
-                  {["Disponible", "Pendiente de limpieza"].includes(h.estado) && <button className="room-reserve" disabled={busy} onClick={() => open("reserva", {numero:h.numero})}>Reservar</button>}
+                  {h.estado === "Pendiente de limpieza" && <button className="room-reserve" disabled={busy} onClick={() => operate("limpiar", {numero:h.numero}, false)}>Limpieza</button>}
+                  {["Disponible", "Pendiente de limpieza", "Limpiando"].includes(h.estado) && <button className="room-reserve" disabled={busy} onClick={() => open("reserva", {numero:h.numero})}>Reservar</button>}
                   <button
                     disabled={busy || !h.puede_mantenimiento}
-                    title={!h.puede_mantenimiento ? "Tiene reservas vigentes; no se puede bloquear la habitación." : undefined}
+                    title={h.trabajo ? "Hay un trabajo en curso en esta habitación." : !h.puede_mantenimiento ? "Tiene reservas vigentes; no se puede bloquear la habitación." : undefined}
                     onClick={() =>
                       ask(
-                        h.mantenimiento
-                          ? "Habilitar habitación"
-                          : "Poner en mantenimiento",
-                        "Una habitación con reservas vigentes no puede entrar en mantenimiento.",
+                        "Iniciar mantenimiento",
+                        "Simulación de 15 segundos. La habitación se habilitará automáticamente al terminar. No se inicia si tiene reservas vigentes.",
                         () =>
                           operate("mantenimiento", { numero: h.numero }, false),
                       )
                     }
                   >
-                    {h.mantenimiento ? "Habilitar" : "Mantenimiento"}
+                    {h.trabajo?.tipo === "Mantenimiento" ? "En mantenimiento" : "Mantenimiento"}
                   </button>
                 </td>
               </tr>
@@ -1475,5 +1502,6 @@ function App() {
   );
 }
 createRoot(document.getElementById("root")).render(<App />);
+
 
 

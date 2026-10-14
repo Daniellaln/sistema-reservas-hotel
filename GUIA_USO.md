@@ -3,7 +3,7 @@
 | Sección | Para qué sirve |
 | --- | --- |
 | Recepción | Buscar reservas, recibir huéspedes, cobrar, ver detalles y finalizar estadías. |
-| Habitaciones | Consultar capacidad y tarifa, reservar y habilitar o bloquear por mantenimiento. Disponible hoy puede tener reservas futuras; la próxima fecha se muestra. |
+| Habitaciones | Consultar capacidad y tarifa, reservar y simular limpieza o mantenimiento. Disponible hoy puede tener reservas futuras; la próxima fecha se muestra. |
 | Huéspedes | Registrar personas y buscar por DNI. Una reserva también permite registrar a una persona nueva sin salir del formulario. |
 | Cobros | Consultar los pagos ya registrados. Registrar un pago desde una reserva o mediante la acción de cobro. |
 | Espera | Guardar solicitudes que aún no tienen habitación asignada: huésped, fechas y personas. Atiende primero la solicitud más antigua. |
@@ -17,14 +17,21 @@ Primero debe estar registrado el huésped. Añadir solicitud guarda sus fechas y
 
 Es una cola enlazada FIFO: primero en entrar, primero en salir. No representa automáticamente la fila física de personas en recepción y no envía avisos ni asigna habitaciones por sí sola. Las solicitudes vencidas se revisan manualmente.
 
-## Mantenimiento
 
-El bloqueo es indefinido hasta volver a habilitar la habitación. Por eso no se permite bloquear una habitación con reservas vigentes, incluso si están previstas para otro día. La pantalla muestra la próxima reserva y deshabilita el botón para explicar esa restricción antes de intentar guardar.
+## Limpieza simulada
 
-## Limpieza después de una estadía
+Confirmar el checkout abre Habitaciones y deja la habitación Pendiente de limpieza. Pulsar Limpieza inicia un cronómetro ascendente de 0 a 5 segundos con el estado Limpiando. Al terminar, Python registra la limpieza completada y habilita la recepción automáticamente; no hay botón Marcar lista.
 
-Finalizar estadía deja la habitación Pendiente de limpieza. Recepción entra en Habitaciones y pulsa Marcar lista solamente después de que se haya realizado la limpieza física. El estado de limpieza se guarda y se conserva al cerrar la aplicación.
+La reserva siguiente se conserva. Mientras se limpia pueden crearse reservas para intervalos libres, pero Recibir está bloqueado. Al terminar puede aparecer Disponible hoy o Reservada, según el calendario.
 
-Se pueden conservar o crear reservas mientras la habitación está pendiente de limpieza, siempre que las fechas estén disponibles. Recibir al huésped está bloqueado hasta marcar la habitación lista. En Recepción aparece Ver limpieza en lugar de Recibir para una llegada actual a una habitación sucia.
+## Mantenimiento simulado
 
-Marcar lista no cancela reservas ni habilita una habitación en mantenimiento. Después puede aparecer Disponible hoy o Reservada, según el calendario. Mantenimiento continúa separado, para reparaciones. Las copias antiguas sin este campo se admiten y se consideran listas al migrar; las nuevas salidas sí registran explícitamente la limpieza pendiente.
+Pulsar Mantenimiento y confirmar inicia el cronómetro de 0 a 15 segundos. En mantenimiento bloquea reservas y llegadas. Al terminar se habilita automáticamente, sin botón Habilitar. No se inicia si hay reservas vigentes; esto evita romper compromisos ya registrados.
+
+La terminación simula el aviso de otro equipo de trabajo. No existe todavía un sistema conectado de limpieza o reparaciones. Si antes del mantenimiento había limpieza pendiente, seguirá pendiente y deberá ejecutarse su simulación de 5 segundos.
+
+## Continuidad
+
+La hora de inicio y duración se guardan en JSON. Cambiar de pantalla no reinicia el trabajo. Al reabrir, el sistema reconoce el tiempo transcurrido y finaliza los trabajos cuyo plazo ya pasó. Se impide iniciar dos trabajos simultáneos en la misma habitación.
+
+

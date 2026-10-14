@@ -2,6 +2,7 @@
 import json
 import os
 import shutil
+from math import isfinite
 from pathlib import Path
 from datetime import date, datetime
 from uuid import UUID
@@ -28,6 +29,18 @@ def validar(datos):
     for h in datos['habitaciones']:
         if type(h.get('limpieza',False)) != bool:
             raise ValueError('Estado de limpieza inválido.')
+        trabajo = h.get('trabajo')
+        if trabajo != None:
+            if not isinstance(trabajo,dict) or trabajo.get('tipo') not in ['Limpieza','Mantenimiento']:
+                raise ValueError('Trabajo inválido.')
+            duracion = 5 if trabajo['tipo'] == 'Limpieza' else 15
+            inicio = trabajo.get('inicio')
+            if type(inicio) not in [int,float] or not isfinite(inicio) or inicio < 0 or type(trabajo.get('duracion')) != int or trabajo['duracion'] != duracion:
+                raise ValueError('Cronómetro inválido.')
+            if trabajo['tipo'] == 'Limpieza' and (not h.get('limpieza',False) or h['mantenimiento']):
+                raise ValueError('Limpieza en curso incompatible con la habitación.')
+            if trabajo['tipo'] == 'Mantenimiento' and not h['mantenimiento']:
+                raise ValueError('Mantenimiento en curso incompatible con la habitación.')
         if not isinstance(h['numero'],str) or not h['numero'].isascii() or not h['numero'].isdigit() or not 1 <= len(h['numero']) <= 4:
             raise ValueError('Número de habitación inválido.')
         if h['tipo'] not in ['Simple','Doble','Matrimonial','Suite'] or type(h['capacidad']) != int or not 1 <= h['capacidad'] <= 20 or type(h['tarifa']) != int or not 1 <= h['tarifa'] <= 100000000 or type(h['mantenimiento']) != bool:

@@ -68,3 +68,13 @@ La revisión visual previa pendiente por expiración del permiso ya se realizó.
 - [x] Persistencia JSON e historial conservan salida, limpieza y llegada.
 
 47 pruebas Python aprobadas y construcción React exitosa. Flujo completo comprobado en Windows con datos ficticios aislados.
+
+## Verificación de cronómetros — entrega 12
+
+- [x] Limpieza muestra Limpiando y contador 0/5 s; termina automáticamente con aviso 5/5 s.
+- [x] La reserva siguiente permanece confirmada; después de limpiar la habitación muestra Reservada.
+- [x] Mantenimiento muestra En mantenimiento y contador 0/15 s; al terminar 15/15 s vuelve a Disponible hoy sin intervención manual.
+- [x] No se puede iniciar otro trabajo sobre una habitación ya ocupada por un trabajo.
+- [x] Inicio/duración se guardan, el progreso continúa al reabrir y las fechas de reservas se respetan.
+
+50 pruebas Python aprobadas y construcción React exitosa. Ambos recorridos automáticos comprobados en la ventana de Windows con datos ficticios.

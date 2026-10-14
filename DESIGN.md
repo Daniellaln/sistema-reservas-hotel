@@ -21,4 +21,7 @@ El total y la confirmación quedan fuera del área desplazable de campos. La ven
 
 
 
-La salida marca Pendiente de limpieza y ofrece Marcar lista en Habitaciones. Una llegada a esa habitación ofrece Ver limpieza. No se usa un diálogo adicional para marcar lista: la acción registra la limpieza completada y se guarda en disco. El estado del calendario sigue siendo independiente: después de limpiar puede mostrar Reservada si hay una reserva vigente. No hay asignación automática de personal ni estimación del tiempo de limpieza.
+
+La salida abre Habitaciones y marca Pendiente de limpieza. Limpieza inicia la simulación: Limpiando, contador ascendente 0–5 s y barra de progreso. La recepción se habilita al finalizar sin intervención manual. Mantenimiento usa un contador 0–15 s y se habilita automáticamente. Los trabajos en curso bloquean otro trabajo en la misma habitación y se conserva el calendario de reservas.
+
+Python mantiene los plazos y los guarda en JSON. La presentación consulta el progreso cada medio segundo mientras existen trabajos, sin sustituir los campos del formulario. Las barras responden al progreso real de la simulación; no se añade una animación decorativa de carga. Una notificación confirma 5/5 o 15/15 s al terminar. No existe aún conexión real con otro departamento.

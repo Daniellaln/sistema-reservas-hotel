@@ -38,3 +38,11 @@ El checkout marca limpieza pendiente. El campo booleano se almacena en JSON y se
 
 47 pruebas Python aprobadas, incluyendo salida con deuda, persistencia, conservación de reservas durante la limpieza, bloqueo de recepción, limpieza completada, compatibilidad de JSON antiguo y rechazo de estados incoherentes. Construcción React exitosa.
 
+
+## Entrega 12: trabajos simulados con cronómetro
+
+Limpieza inicia un contador de 0 a 5 segundos; Mantenimiento, de 0 a 15. Python valida el inicio, guarda inicio/duración, termina el trabajo y registra el evento. React muestra el avance y consulta el estado mientras hay trabajos. Terminar el checkout abre Habitaciones para iniciar Limpieza. No hay Marcar lista ni Habilitar manuales. Se conserva el calendario de reservas y no se permite recibir durante limpieza ni reservar en mantenimiento.
+
+Los cronómetros sobreviven a cambios de pantalla y reapertura. No hay integración real con otro sistema de personal. Una limpieza pendiente anterior se conserva al terminar mantenimiento.
+
+50 pruebas Python aprobadas: plazos exactos, bloqueo de acciones, trabajos duplicados, reinicio, formatos inválidos y restauración del estado si falla el guardado. Construcción React exitosa.

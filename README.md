@@ -49,6 +49,9 @@ Nueva reserva permite registrar al huésped y la reserva en un solo formulario. 
 Recibir cambia una reserva válida a En estancia directamente. La barra nativa de Windows permite mover, minimizar, restaurar/maximizar y cerrar. La navegación usa liquid-glass-react y la presentación concentra el vidrio en los controles. Consulta DESIGN.md y TERCEROS.md.
 
 
-## Limpieza
+## Limpieza y mantenimiento simulados
 
-Después de Finalizar estadía, Habitaciones muestra Pendiente de limpieza. Tras la limpieza física, pulsa Marcar lista. Las reservas se conservan y pueden crearse para intervalos disponibles; Recibir está bloqueado hasta terminar la limpieza. Reparaciones siguen gestionándose con Mantenimiento. Las copias antiguas sin el campo de limpieza se admiten como habitaciones listas; no es posible reconstruir limpiezas anteriores que nunca se registraron.
+Después del checkout, pulsa Limpieza: aparece Limpiando y cuenta de 0 a 5 segundos. Al terminar se habilita automáticamente para recibir. Mantenimiento cuenta de 0 a 15 y se libera automáticamente. Las reservas vigentes se respetan; la limpieza pendiente no se borra al finalizar una reparación. No hay integración real con otro departamento.
+
+Python controla plazos y estados, React actualiza el progreso. Inicio y duración se guardan en JSON; al reabrir se reconoce el tiempo transcurrido. Se admiten copias antiguas sin campos de trabajo. GUIA_USO.md explica el recorrido.
+

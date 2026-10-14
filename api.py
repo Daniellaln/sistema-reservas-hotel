@@ -4,14 +4,16 @@ from threading import RLock
 from pathlib import Path
 import json
 from datetime import date, timedelta
+from time import time
 from modelo import Hotel
 from algoritmos import merge_sort
 from repositorio import Repositorio, validar
 
 class API:
-    def __init__(self, carpeta, reloj=date.today):
+    def __init__(self, carpeta, reloj=date.today, segundos=time):
         self._repo = Repositorio(carpeta)
         self._reloj = reloj
+        self._segundos = segundos
         self._hotel = Hotel(self._repo.leer(),reloj)
         self._lock = RLock()
         self._revision = 0
@@ -44,14 +46,17 @@ class API:
             r = self._hotel.obtener(p['reserva'])
             p['nombre'] = self._hotel.indice.buscar(r['dni'])['nombre']
         for h in d['habitaciones']:
-            h['puede_mantenimiento'] = h['mantenimiento'] or not self._hotel.tiene_reservas(h['numero'])
+            h['puede_mantenimiento'] = h['trabajo'] == None and not self._hotel.tiene_reservas(h['numero'])
             h['proxima_reserva'] = None
             for r in reservas:
                 if r['habitacion'] == h['numero'] and r['estado'] == 'Confirmada' and r['entrada'] > self._reloj().isoformat():
                     if h['proxima_reserva'] == None or r['entrada'] < h['proxima_reserva']:
                         h['proxima_reserva'] = r['entrada']
             h['estado'] = 'Disponible'
-            if h['mantenimiento']:
+            if h['trabajo'] != None:
+                h['estado'] = 'Limpiando' if h['trabajo']['tipo'] == 'Limpieza' else 'En mantenimiento'
+                h['trabajo']['transcurrido'] = min(h['trabajo']['duracion'],max(0,int(self._segundos()-h['trabajo']['inicio'])))
+            elif h['mantenimiento']:
                 h['estado'] = 'Mantenimiento'
             elif self._hotel.tiene_estancia(h['numero']):
                 h['estado'] = 'Ocupada'
@@ -71,6 +76,14 @@ class API:
 
     def estado(self, orden='entrada'):
         with self._lock:
+            antes = deepcopy(self._hotel.datos)
+            try:
+                if self._hotel.finalizar_trabajos(self._segundos()):
+                    self._repo.guardar(self._hotel.datos)
+                    self._revision = self._revision + 1
+            except (ValueError,TypeError,KeyError,OSError):
+                self._hotel = Hotel(antes,self._reloj)
+                raise
             datos = self._estado(orden)
             self._orden = orden
             return datos
@@ -106,9 +119,9 @@ class API:
         elif accion == 'estado':
             h.estado(texto('id'),texto('estado'))
         elif accion == 'mantenimiento':
-            h.mantenimiento(texto('numero'))
+            h.iniciar_trabajo(texto('numero'),'Mantenimiento',self._segundos())
         elif accion == 'limpiar':
-            h.limpiar(texto('numero'))
+            h.iniciar_trabajo(texto('numero'),'Limpieza',self._segundos())
         elif accion == 'espera':
             h.esperar(texto('dni'),texto('entrada'),texto('salida'),self._numero(d,'personas'))
         elif accion == 'atender':
@@ -139,7 +152,9 @@ class API:
                 self._revision = self._revision+1
                 mensaje = 'Cambios guardados.'
                 if accion == 'limpiar':
-                    mensaje = 'Limpieza completada. Habitación lista para recibir huéspedes.'
+                    mensaje = 'Limpieza iniciada. Simulación de 5 segundos.'
+                elif accion == 'mantenimiento':
+                    mensaje = 'Mantenimiento iniciado. Simulación de 15 segundos.'
                 elif accion == 'estado' and datos.get('estado') == 'Finalizada':
                     mensaje = 'Estadía finalizada. Habitación pendiente de limpieza.'
                 return {'ok':True,'mensaje':mensaje,'datos':self._estado()}
