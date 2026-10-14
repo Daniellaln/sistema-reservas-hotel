@@ -26,6 +26,8 @@ def validar(datos):
         if not isinstance(h['nombre'],str) or not 2 <= len(h['nombre'].strip()) <= 100 or not isinstance(h['telefono'],str) or len(h['telefono']) > 30:
             raise ValueError('Datos de huésped inválidos.')
     for h in datos['habitaciones']:
+        if type(h.get('limpieza',False)) != bool:
+            raise ValueError('Estado de limpieza inválido.')
         if not isinstance(h['numero'],str) or not h['numero'].isascii() or not h['numero'].isdigit() or not 1 <= len(h['numero']) <= 4:
             raise ValueError('Número de habitación inválido.')
         if h['tipo'] not in ['Simple','Doble','Matrimonial','Suite'] or type(h['capacidad']) != int or not 1 <= h['capacidad'] <= 20 or type(h['tarifa']) != int or not 1 <= h['tarifa'] <= 100000000 or type(h['mantenimiento']) != bool:
@@ -43,6 +45,8 @@ def validar(datos):
         if type(r['personas']) != int or not 1 <= r['personas'] <= h['capacidad'] or type(r['total']) != int or not 1 <= r['total'] <= 36500000000 or r['estado'] not in ['Confirmada','En estancia','Finalizada','Cancelada']:
             raise ValueError('Reserva inválida.')
         if r['estado'] in ['Confirmada','En estancia']:
+            if r['estado'] == 'En estancia' and h['limpieza']:
+                raise ValueError('Una habitación pendiente de limpieza no puede tener una estancia abierta.')
             if h['mantenimiento']:
                 raise ValueError('Hay reservas en una habitación en mantenimiento.')
             for otra in datos['reservas']:

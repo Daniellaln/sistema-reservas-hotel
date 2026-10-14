@@ -20,3 +20,11 @@ Es una cola enlazada FIFO: primero en entrar, primero en salir. No representa au
 ## Mantenimiento
 
 El bloqueo es indefinido hasta volver a habilitar la habitación. Por eso no se permite bloquear una habitación con reservas vigentes, incluso si están previstas para otro día. La pantalla muestra la próxima reserva y deshabilita el botón para explicar esa restricción antes de intentar guardar.
+
+## Limpieza después de una estadía
+
+Finalizar estadía deja la habitación Pendiente de limpieza. Recepción entra en Habitaciones y pulsa Marcar lista solamente después de que se haya realizado la limpieza física. El estado de limpieza se guarda y se conserva al cerrar la aplicación.
+
+Se pueden conservar o crear reservas mientras la habitación está pendiente de limpieza, siempre que las fechas estén disponibles. Recibir al huésped está bloqueado hasta marcar la habitación lista. En Recepción aparece Ver limpieza en lugar de Recibir para una llegada actual a una habitación sucia.
+
+Marcar lista no cancela reservas ni habilita una habitación en mantenimiento. Después puede aparecer Disponible hoy o Reservada, según el calendario. Mantenimiento continúa separado, para reparaciones. Las copias antiguas sin este campo se admiten y se consideran listas al migrar; las nuevas salidas sí registran explícitamente la limpieza pendiente.

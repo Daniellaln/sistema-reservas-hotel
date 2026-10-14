@@ -39,6 +39,8 @@ class Hotel:
         self.reloj = reloj
         self.datos = datos if datos is not None else {'version': 1, 'huespedes': [], 'habitaciones': [{'numero': '101', 'tipo': 'Simple', 'capacidad': 1, 'tarifa': 8000, 'mantenimiento': False}, {'numero': '102', 'tipo': 'Doble', 'capacidad': 2, 'tarifa': 13000, 'mantenimiento': False}, {'numero': '201', 'tipo': 'Matrimonial', 'capacidad': 2, 'tarifa': 16000, 'mantenimiento': False}], 'reservas': [], 'pagos': [], 'espera': [], 'historial': []}
         self.indice = arbolBinario()
+        for h in self.datos['habitaciones']:
+            h.setdefault('limpieza', False)
         for h in self.datos['huespedes']:
             self.indice.agregar(h['dni'], h)
         self.cola = colaEnlazada(self.datos['espera'])
@@ -63,7 +65,7 @@ class Hotel:
         exigir(self.buscar_habitacion(numero) == None, 'Número ya registrado.')
         exigir(tipo in ['Simple', 'Doble', 'Matrimonial', 'Suite'], 'Tipo inválido.')
         exigir(1 <= capacidad <= 20, 'Capacidad de 1 a 20 personas.')
-        self.datos['habitaciones'].append({'numero': numero, 'tipo': tipo, 'capacidad': capacidad, 'tarifa': centimos(tarifa), 'mantenimiento': False})
+        self.datos['habitaciones'].append({'numero': numero, 'tipo': tipo, 'capacidad': capacidad, 'tarifa': centimos(tarifa), 'mantenimiento': False, 'limpieza': False})
         self.registrar('Habitación registrada · ' + numero)
 
     def rango(self, entrada, salida):
@@ -153,6 +155,9 @@ class Hotel:
             exigir(self.saldo(identificador) == r['total'], 'Tiene pagos. Esta versión no procesa reembolsos.')
         elif estado == 'En estancia':
             exigir(r['estado'] == 'Confirmada', 'La reserva no está confirmada.')
+            h = self.buscar_habitacion(r['habitacion'])
+            exigir(not h['mantenimiento'], 'La habitación está en mantenimiento.')
+            exigir(not h['limpieza'], 'La habitación está pendiente de limpieza. Márcala como lista antes de recibir al huésped.')
             exigir(r['entrada'] <= self.reloj().isoformat() < r['salida'], 'El check-in debe estar dentro de las fechas reservadas.')
             exigir(not self.tiene_estancia(r['habitacion']), 'Hay una estancia abierta; realiza su check-out.')
         elif estado == 'Finalizada':
@@ -161,7 +166,18 @@ class Hotel:
         else:
             raise ValueError('Estado inválido.')
         r['estado'] = estado
+        if estado == 'Finalizada':
+            self.buscar_habitacion(r['habitacion'])['limpieza'] = True
         self.registrar(estado + ' · ' + identificador[:8])
+
+    def limpiar(self, numero):
+        h = self.buscar_habitacion(numero)
+        exigir(h, 'Habitación inexistente.')
+        exigir(h['limpieza'], 'La habitación ya está lista.')
+        exigir(not self.tiene_estancia(numero), 'No puedes marcar lista una habitación ocupada.')
+        exigir(not h['mantenimiento'], 'Primero habilita la habitación que está en mantenimiento.')
+        h['limpieza'] = False
+        self.registrar('Limpieza completada · Habitación ' + numero)
 
     def mantenimiento(self, numero):
         h = self.buscar_habitacion(numero)

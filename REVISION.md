@@ -31,3 +31,10 @@ Se restauró la barra nativa de Windows. Más es un desplegable controlado en un
 
 43 pruebas Python aprobadas y construcción React exitosa. Arrastre nativo y cierre al pulsar fuera verificados en Windows.
 
+
+## Entrega 11: limpieza
+
+El checkout marca limpieza pendiente. El campo booleano se almacena en JSON y se valida; se aceptan copias anteriores sin el campo. Las reservas continúan, pero Python bloquea el check-in mientras la habitación esté pendiente. Habitaciones ofrece Marcar lista, y una llegada pendiente ofrece Ver limpieza. Mantenimiento sigue siendo un bloqueo independiente para reparaciones.
+
+47 pruebas Python aprobadas, incluyendo salida con deuda, persistencia, conservación de reservas durante la limpieza, bloqueo de recepción, limpieza completada, compatibilidad de JSON antiguo y rechazo de estados incoherentes. Construcción React exitosa.
+

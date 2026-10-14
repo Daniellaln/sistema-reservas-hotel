@@ -279,7 +279,7 @@ function App() {
         : estado === "Finalizada"
           ? "Finalizar la estadía"
           : "Cancelar reserva",
-      `${r.nombre} · Habitación ${r.habitacion}. ${estado === "Cancelada" ? "Se conservará la reserva en el historial. La cancelación con pagos está bloqueada." : estado === "Finalizada" ? "El saldo debe estar pagado." : "La fecha de hoy debe estar dentro de la estadía."}`,
+      `${r.nombre} · Habitación ${r.habitacion}. ${estado === "Cancelada" ? "Se conservará la reserva en el historial. La cancelación con pagos está bloqueada." : estado === "Finalizada" ? "El saldo debe estar pagado. La habitación quedará pendiente de limpieza." : "La fecha de hoy debe estar dentro de la estadía."}`,
       () => operate("estado", { id: r.id, estado }),
     );
   }
@@ -328,6 +328,7 @@ function App() {
       </div>
     );
   const term = search.trim().toLocaleLowerCase("es");
+  const dirtyRoom = (r) => data.habitaciones.some(h => h.numero === r.habitacion && h.limpieza);
   const knownGuest = data.huespedes.find((h) => h.dni === guestDni);
   const tomorrow = new Date(data.hoy + "T12:00:00");
   tomorrow.setDate(tomorrow.getDate() + 1);
@@ -650,9 +651,9 @@ function App() {
                         {r.estado === "Confirmada" && (
                           <button
                             disabled={busy}
-                            onClick={() => r.entrada <= data.hoy && data.hoy < r.salida ? change(r, "En estancia") : open("detalle", r)}
+                            onClick={() => r.entrada <= data.hoy && data.hoy < r.salida ? dirtyRoom(r) ? setView("Habitaciones") : change(r, "En estancia") : open("detalle", r)}
                           >
-                            {r.entrada <= data.hoy && data.hoy < r.salida ? "Recibir" : "Ver"} <ArrowUpRight size={13} />
+                            {r.entrada <= data.hoy && data.hoy < r.salida ? dirtyRoom(r) ? "Ver limpieza" : "Recibir" : "Ver"} <ArrowUpRight size={13} />
                           </button>
                         )}
                         {r.estado === "En estancia" && r.saldo === 0 && (
@@ -798,7 +799,8 @@ function App() {
                   {h.proxima_reserva && <small>Reserva desde {fecha(h.proxima_reserva)}</small>}
                 </td>
                 <td>
-                  {h.estado === "Disponible" && <button className="room-reserve" disabled={busy} onClick={() => open("reserva", {numero:h.numero})}>Reservar</button>}
+                  {h.estado === "Pendiente de limpieza" && <button className="room-reserve" disabled={busy} onClick={() => operate("limpiar", {numero:h.numero}, false)}>Marcar lista</button>}
+                  {["Disponible", "Pendiente de limpieza"].includes(h.estado) && <button className="room-reserve" disabled={busy} onClick={() => open("reserva", {numero:h.numero})}>Reservar</button>}
                   <button
                     disabled={busy || !h.puede_mantenimiento}
                     title={!h.puede_mantenimiento ? "Tiene reservas vigentes; no se puede bloquear la habitación." : undefined}
@@ -1226,9 +1228,9 @@ function App() {
                     <>
                       <button
                         className="primary"
-                        onClick={() => change(panel.record, "En estancia")}
+                        onClick={() => dirtyRoom(panel.record) ? (setPanel(null),setView("Habitaciones")) : change(panel.record, "En estancia")}
                       >
-                        Recibir huésped
+                        {dirtyRoom(panel.record) ? "Ver limpieza de habitación" : "Recibir huésped"}
                       </button>
                       <button
                         className="danger"
@@ -1473,4 +1475,5 @@ function App() {
   );
 }
 createRoot(document.getElementById("root")).render(<App />);
+
 

@@ -48,3 +48,7 @@ Nueva reserva permite registrar al huésped y la reserva en un solo formulario. 
 
 Recibir cambia una reserva válida a En estancia directamente. La barra nativa de Windows permite mover, minimizar, restaurar/maximizar y cerrar. La navegación usa liquid-glass-react y la presentación concentra el vidrio en los controles. Consulta DESIGN.md y TERCEROS.md.
 
+
+## Limpieza
+
+Después de Finalizar estadía, Habitaciones muestra Pendiente de limpieza. Tras la limpieza física, pulsa Marcar lista. Las reservas se conservan y pueden crearse para intervalos disponibles; Recibir está bloqueado hasta terminar la limpieza. Reparaciones siguen gestionándose con Mantenimiento. Las copias antiguas sin el campo de limpieza se admiten como habitaciones listas; no es posible reconstruir limpiezas anteriores que nunca se registraron.

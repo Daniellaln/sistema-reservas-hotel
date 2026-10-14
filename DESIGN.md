@@ -20,3 +20,5 @@ El total y la confirmación quedan fuera del área desplazable de campos. La ven
 
 
 
+
+La salida marca Pendiente de limpieza y ofrece Marcar lista en Habitaciones. Una llegada a esa habitación ofrece Ver limpieza. No se usa un diálogo adicional para marcar lista: la acción registra la limpieza completada y se guarda en disco. El estado del calendario sigue siendo independiente: después de limpiar puede mostrar Reservada si hay una reserva vigente. No hay asignación automática de personal ni estimación del tiempo de limpieza.

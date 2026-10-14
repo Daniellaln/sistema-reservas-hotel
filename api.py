@@ -55,6 +55,8 @@ class API:
                 h['estado'] = 'Mantenimiento'
             elif self._hotel.tiene_estancia(h['numero']):
                 h['estado'] = 'Ocupada'
+            elif h['limpieza']:
+                h['estado'] = 'Pendiente de limpieza'
             elif not self._hotel.disponible(h['numero'],self._reloj().isoformat(),(self._reloj()+timedelta(days=1)).isoformat()):
                 h['estado'] = 'Reservada'
         for i,s in enumerate(d['espera']):
@@ -105,6 +107,8 @@ class API:
             h.estado(texto('id'),texto('estado'))
         elif accion == 'mantenimiento':
             h.mantenimiento(texto('numero'))
+        elif accion == 'limpiar':
+            h.limpiar(texto('numero'))
         elif accion == 'espera':
             h.esperar(texto('dni'),texto('entrada'),texto('salida'),self._numero(d,'personas'))
         elif accion == 'atender':
@@ -133,7 +137,12 @@ class API:
                 self._modificar(accion,datos)
                 self._repo.guardar(self._hotel.datos)
                 self._revision = self._revision+1
-                return {'ok':True,'mensaje':'Cambios guardados.','datos':self._estado()}
+                mensaje = 'Cambios guardados.'
+                if accion == 'limpiar':
+                    mensaje = 'Limpieza completada. Habitación lista para recibir huéspedes.'
+                elif accion == 'estado' and datos.get('estado') == 'Finalizada':
+                    mensaje = 'Estadía finalizada. Habitación pendiente de limpieza.'
+                return {'ok':True,'mensaje':mensaje,'datos':self._estado()}
             except (ValueError,TypeError,KeyError,OSError) as error:
                 self._hotel = Hotel(antes,self._reloj)
                 return {'ok':False,'mensaje':str(error),'datos':self._estado()}

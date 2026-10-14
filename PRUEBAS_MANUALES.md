@@ -58,3 +58,13 @@ La revisión visual previa pendiente por expiración del permiso ya se realizó.
 
 - [x] Escape cierra Más y devuelve el foco al botón.
 - [x] Modo shader revisado en WebView2: eliminada la banda gris; reflejos y elasticidad permanecen activos.
+
+## Verificación de limpieza — entrega 11
+
+- [x] Finalizar estadía pagada marca Pendiente de limpieza y conserva la reserva de la llegada siguiente.
+- [x] La llegada muestra Ver limpieza y abre Habitaciones directamente.
+- [x] Marcar lista guarda limpieza completada; la habitación aparece Reservada cuando hay una reserva vigente.
+- [x] Recibir vuelve a estar disponible; el siguiente huésped entra sin perder su reserva.
+- [x] Persistencia JSON e historial conservan salida, limpieza y llegada.
+
+47 pruebas Python aprobadas y construcción React exitosa. Flujo completo comprobado en Windows con datos ficticios aislados.
