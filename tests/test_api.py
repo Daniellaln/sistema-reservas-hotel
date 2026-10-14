@@ -1,0 +1,68 @@
+import unittest
+from tempfile import TemporaryDirectory
+from pathlib import Path
+from datetime import date
+from unittest.mock import patch
+from concurrent.futures import ThreadPoolExecutor
+from api import API
+
+class Puente(unittest.TestCase):
+    def setUp(self):
+        self.tmp=TemporaryDirectory(dir=Path(__file__).parent)
+        self.api=API(self.tmp.name,reloj=lambda:date(2026,10,13))
+    def tearDown(self):self.tmp.cleanup()
+    def ejecutar(self,accion,datos):
+        return self.api.operar(accion,datos,self.api.estado()['revision'])
+    def demo(self):
+        self.assertTrue(self.ejecutar('demo',{})['ok'])
+
+    def test_flujo(self):
+        self.demo()
+        r=self.api.estado()['reservas'][0]
+        resultado=self.ejecutar('pago',{'id':r['id'],'monto':'10.25','metodo':'Yape'})
+        self.assertTrue(resultado['ok'])
+        self.assertEqual(resultado['datos']['reservas'][0]['saldo'],14975)
+        self.assertTrue(self.ejecutar('estado',{'id':r['id'],'estado':'En estancia'})['ok'])
+        self.assertFalse(self.ejecutar('estado',{'id':r['id'],'estado':'Finalizada'})['ok'])
+        self.assertTrue(self.ejecutar('pago',{'id':r['id'],'monto':'149.75','metodo':'Efectivo'})['ok'])
+        self.assertTrue(self.ejecutar('estado',{'id':r['id'],'estado':'Finalizada'})['ok'])
+        nuevo=API(self.tmp.name)
+        self.assertEqual(nuevo.estado()['reservas'][0]['estado'],'Finalizada')
+
+    def test_doble_clic(self):
+        self.demo();estado=self.api.estado();r=estado['reservas'][0]
+        def cobrar():return self.api.operar('pago',{'id':r['id'],'monto':'1','metodo':'Yape'},estado['revision'])
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            resultados=list(pool.map(lambda _:cobrar(),[1,2]))
+        self.assertEqual(sum(x['ok'] for x in resultados),1)
+        self.assertEqual(len(self.api.estado()['pagos']),1)
+
+    def test_fallo_guardado_revierte_memoria(self):
+        self.demo();antes=self.api.estado()
+        with patch.object(self.api._repo,'guardar',side_effect=OSError('No se puede escribir')):
+            resultado=self.ejecutar('huesped',{'dni':'10000003','nombre':'Nuevo','telefono':''})
+        self.assertFalse(resultado['ok'])
+        self.assertEqual(self.api.estado()['huespedes'],antes['huespedes'])
+
+    def test_cotizacion_y_busqueda(self):
+        self.demo()
+        self.assertEqual(self.api.buscar('10000001')['nombre'],'Valeria Torres')
+        self.assertIsNone(self.api.buscar('99999999'))
+        q=self.api.cotizar('201','2026-10-13','2026-10-15','2')
+        self.assertEqual(q['total'],32000)
+        self.assertTrue(q['disponible'])
+        self.assertFalse(self.api.cotizar('101','2026-10-13','2026-10-15','2')['ok'])
+
+    def test_payloads(self):
+        for accion,datos in [('reserva',{}),('huesped',{'dni':None}),('habitacion',{'capacidad':True}),('desconocida',{}),('reserva',{'personas':'1.5'})]:
+            self.assertFalse(self.ejecutar(accion,datos)['ok'])
+
+    def test_demo_no_sobrescribe(self):
+        self.demo();self.assertFalse(self.ejecutar('demo',{})['ok'])
+
+    def test_merge_sort_usado(self):
+        self.demo()
+        with patch('api.merge_sort',wraps=__import__('algoritmos').merge_sort) as m:
+            d=self.api.estado('total')
+            m.assert_called_once()
+            self.assertLessEqual(d['reservas'][0]['total'],d['reservas'][1]['total'])
